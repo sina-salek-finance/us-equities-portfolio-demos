@@ -18,6 +18,7 @@ from utils.zipline_func_wrappers import (
 )
 
 from sklearn.ensemble import RandomForestClassifier
+from xgboost import XGBClassifier
 
 from alpha_library.alphas import (
     momentum_1yr,
@@ -89,14 +90,14 @@ def main():
         "--end_date", type=str, help="End date for backtest", default="2016-01-05"
     )
     parser.add_argument(
-        "--years_back", type=int, help="Number of years to backtest", default=3
+        "--years_back", type=int, help="Number of years to backtest", default=7
     )
 
     args = parser.parse_args()
 
     universe_end_date = pd.to_datetime(args.end_date)
 
-    factor_start_date = universe_end_date - pd.DateOffset(years=args.years_back, days=1)
+    factor_start_date = universe_end_date - pd.DateOffset(years=args.years_back)
 
     universe = AverageDollarVolume(window_length=120).top(500)
     trading_calendar = get_calendar("NYSE")
@@ -243,47 +244,25 @@ def main():
     X = temp[features]
     y = temp[target_label]
 
-    X_train, X_valid, X_test, y_train, y_valid, y_test = train_valid_test_split(
-        X, y, 0.6, 0.2, 0.2
-    )
+    X_train, X_test, y_train, y_test = train_valid_test_split(X, y, 0.8, 0.2)
 
     n_days = 10
     n_stocks = 500
 
     clf_random_state = 0
+
     clf_parameters = {
-        "criterion": "entropy",
-        "min_samples_leaf": n_stocks * n_days,
-        "oob_score": True,
-        "n_jobs": -1,
-        "random_state": clf_random_state,
+        "objective": "binary:logistic",
+        "eval_metric": "logloss",
+        "eta": 0.1,
+        "max_depth": 5,
+        "min_child_weight": 5,
+        "subsample": 0.8,
+        "colsample_bytree": 0.8,
+        "n_estimators": 1000,
+        "early_stopping_rounds": 10,
+        "seed": clf_random_state,
     }
-    n_trees_l = [50, 100, 250, 500, 1000]
-
-    train_score = []
-    valid_score = []
-    oob_score = []
-    feature_importances = []
-
-    for n_trees in tqdm(n_trees_l, desc="Training Models", unit="Model"):
-        clf = RandomForestClassifier(n_trees, **clf_parameters)
-        clf.fit(X_train, y_train)
-
-        train_score.append(clf.score(X_train, y_train.values))
-        valid_score.append(clf.score(X_valid, y_valid.values))
-        oob_score.append(clf.oob_score_)
-        feature_importances.append(clf.feature_importances_)
-
-    dvis.plot(
-        [n_trees_l] * 3,
-        [train_score, valid_score, oob_score],
-        ["train", "validation", "oob"],
-        "Random Forrest Accuracy",
-        "Number of Trees",
-    )
-
-    print("Features Ranked by Average Importance:\n")
-    rank_features_by_importance(np.average(feature_importances, axis=0), features)
 
     all_assets = all_factors.index.levels[1].values.tolist()
 
@@ -303,108 +282,46 @@ def main():
         "volatility_20d",
     ]
 
-    show_sample_results(all_factors, X_train, clf, factor_names, pricing=all_pricing)
+    # train_score = []
 
-    train_score = []
-    valid_score = []
-    oob_score = []
+    clf = XGBClassifier(**clf_parameters)
 
-    for n_trees in tqdm(n_trees_l, desc="Training Models", unit="Model"):
-        clf = RandomForestClassifier(n_trees, **clf_parameters)
-
-        clf_nov = NoOverlapVoter(clf, "soft")
-        clf_nov.fit(X_train, y_train)
-
-        train_score.append(clf_nov.score(X_train, y_train.astype(int).values))
-        valid_score.append(clf_nov.score(X_valid, y_valid.astype(int).values))
-        oob_score.append(clf_nov.oob_score_)
-
-    dvis.plot(
-        [n_trees_l] * 3,
-        [train_score, valid_score, oob_score],
-        ["train", "validation", "oob"],
-        "Random Forrest Accuracy",
-        "Number of Trees",
-    )
-
-    show_sample_results(
-        all_factors, X_valid, clf_nov, factor_names, pricing=all_pricing
-    )
-
-    n_trees = 500
-
-    clf = RandomForestClassifier(n_trees, **clf_parameters)
     clf_nov = NoOverlapVoter(clf, "soft")
-    clf_nov.fit(pd.concat([X_train, X_valid]), pd.concat([y_train, y_valid]))
+    clf_nov.fit(X_train, y_train, validate=True)
 
-    print(
-        "train: {}, oob: {}, valid: {}".format(
-            clf_nov.score(X_train, y_train.values),
-            clf_nov.score(X_valid, y_valid.values),
-            clf_nov.oob_score_,
-        )
-    )
+    # TODO: implement an evaluation method
+
+    # train_score.append(clf_nov.score(X_train, y_train.astype(int).values))
+    # oob_score.append(clf_nov.oob_score_)
+
+    # dvis.plot(
+    #     [n_trees_l] * 3,
+    #     [train_score, valid_score, oob_score],
+    #     ["train", "validation", "oob"],
+    #     "Random Forrest Accuracy",
+    #     "Number of Trees",
+    # )
+
+    # n_trees = 500
+    #
+    # clf = XGBClassifier(n_trees, **clf_parameters)
+    # clf_nov = NoOverlapVoter(clf, "soft")
+    # TODO: make a final fit method that takes in all data
+    # clf_nov.fit(pd.concat([X_train, X_valid]), pd.concat([y_train, y_valid]))
+
+    # print(
+    #     "train: {}, oob: {}, valid: {}".format(
+    #         clf_nov.score(X_train, y_train.values),
+    #         clf_nov.score(X_valid, y_valid.values),
+    #         clf_nov.oob_score_,
+    #     )
+    # )
 
     show_sample_results(
         all_factors, X_train, clf_nov, factor_names, pricing=all_pricing
     )
 
-    show_sample_results(
-        all_factors, X_valid, clf_nov, factor_names, pricing=all_pricing
-    )
-
     show_sample_results(all_factors, X_test, clf_nov, factor_names, pricing=all_pricing)
-
-    returns = (
-        get_pricing(
-            data_portal,
-            trading_calendar,
-            universe_tickers,
-            factor_start_date,
-            universe_end_date,
-        )
-        .pct_change()[1:]
-        .fillna(0)
-    )
-
-    num_factor_exposures = 20
-    pca = fit_pca(returns, num_factor_exposures, "full")
-    factor_betas = get_factor_betas(
-        pca, returns.columns.values, np.arange(num_factor_exposures)
-    )
-
-    risk_factor_returns = get_factor_returns(
-        pca, returns, returns.index, np.arange(num_factor_exposures)
-    )
-
-    ann_factor = 252
-    risk_factor_cov_matrix = get_factor_cov_matrix(risk_factor_returns, ann_factor)
-
-    risk_idiosyncratic_var_matrix = get_idiosyncratic_var_matrix(
-        returns, risk_factor_returns, factor_betas, ann_factor
-    )
-
-    risk_idiosyncratic_var_vector = get_idiosyncratic_var_vector(
-        returns, risk_idiosyncratic_var_matrix
-    )
-
-    prob_array = [-1, 1]
-
-    last_date = X.reset_index().level_0.iloc[-1]
-    last_day_data = X.loc[last_date]
-    alpha_vector = pd.DataFrame(
-        clf_nov.predict_proba(last_day_data).dot(np.array(prob_array)),
-        index=last_day_data.index,
-    )
-
-    lambda_ = get_pricing(
-        data_portal,
-        trading_calendar,
-        universe_tickers,
-        factor_start_date,
-        universe_end_date,
-        field="volume",
-    ).mean()
 
     prob_array = [-1, 1]
     alpha_vectors = pd.DataFrame(

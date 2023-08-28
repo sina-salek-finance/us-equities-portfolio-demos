@@ -2,6 +2,8 @@ from scipy.stats import spearmanr
 from sklearn.decomposition import PCA
 import numpy as np
 
+from matplotlib import pyplot as plt
+
 
 def get_factor_sharpe_ratio(factor_returns, annualization_factor=np.sqrt(252)):
     return annualization_factor * factor_returns.mean() / factor_returns.std()
