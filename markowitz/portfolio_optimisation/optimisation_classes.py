@@ -118,6 +118,9 @@ class AbstractOptimalHoldings(ABC):
             factor_cov_matrix,
             idiosyncratic_var_vector,
         )
+        transaction_costs = cvx.sum(
+            cvx.multiply(cvx.power(weights - previous_weights, 2), lambda_)
+        )
 
         obj = self._get_obj(weights, alpha_vector)
         constraints = self._get_constraints(
@@ -125,7 +128,7 @@ class AbstractOptimalHoldings(ABC):
             factor_betas.loc[alpha_vector.index].values,
             risk,
             previous_weights,
-            lambda_,
+            transaction_costs,
         )
 
         prob = cvx.Problem(obj, constraints)
@@ -162,7 +165,7 @@ class OptimalHoldings(AbstractOptimalHoldings):
 
         return cvx.Minimize(to_minimise)
 
-    def _get_constraints(self, weights, factor_betas, risk, previous_weights, lambda_):
+    def _get_constraints(self, weights, factor_betas, risk, previous_weights, transaction_costs):
         """
         Get the constraints
 
@@ -181,10 +184,6 @@ class OptimalHoldings(AbstractOptimalHoldings):
             Constraints
         """
         assert len(factor_betas.shape) == 2
-
-        transaction_costs = cvx.sum(
-            cvx.multiply(cvx.power(weights - previous_weights, 2), lambda_)
-        )
 
         constraints = [
             cvx.matmul(factor_betas.T, weights) <= self.factor_max,

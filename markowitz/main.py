@@ -349,13 +349,14 @@ def main():
         try:
             if idx == 0:
                 previous_weights = pd.DataFrame(
-                    np.zeros_like(alpha_vectors.loc[end_date])
+                    np.zeros_like(alpha_vectors.loc[end_date]),
+                    index=alpha_vectors.loc[end_date].index,
                 )[0]
             else:
                 previous_weights = optimal_weights_dict[last_date][0]
             previous_weights = pd.DataFrame(alpha_vectors.loc[end_date]).join(
                 previous_weights.rename("prev")
-            )["prev"]
+            )["prev"].fillna(0)
             optimal_weights_dict[end_date] = OptimalHoldingsStrictFactor(
                 weights_max=0.02,
                 weights_min=-0.02,

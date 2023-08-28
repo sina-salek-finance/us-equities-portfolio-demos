@@ -71,7 +71,7 @@ def get_all_backtest_data(
         risk_idiosyncratic_var_vector_dict[end_date] = get_idiosyncratic_var_vector(
             returns, risk_idiosyncratic_var_matrix
         )
-        lambdas_dict[end_date] = get_pricing(
+        lambdas_dict[end_date] = 1/ get_pricing(
             data_portal,
             trading_calendar,
             date_tickers,
