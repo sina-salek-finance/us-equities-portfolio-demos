@@ -118,22 +118,25 @@ class AbstractOptimalHoldings(ABC):
             factor_cov_matrix,
             idiosyncratic_var_vector,
         )
-        transaction_costs = cvx.sum(
-            cvx.multiply(cvx.power(weights - previous_weights, 2), lambda_)
-        )
+
+        constraint_params = [weights, factor_betas, risk]
+
+        if self.transaction_cost_max:
+            transaction_costs = cvx.sum(
+                cvx.multiply(cvx.power(weights - previous_weights, 2), lambda_)
+            )
+        else:
+            transaction_costs = None
+        constraint_params.append(transaction_costs)
 
         obj = self._get_obj(weights, alpha_vector)
         constraints = self._get_constraints(
-            weights,
-            factor_betas.loc[alpha_vector.index].values,
-            risk,
-            previous_weights,
-            transaction_costs,
+            *constraint_params,
         )
 
         prob = cvx.Problem(obj, constraints)
         if max_iters:
-            prob.solve(max_iters=500, verbose=verbose, solver=solver)
+            prob.solve(max_iters=max_iters, verbose=verbose, solver=solver)
         else:
             prob.solve(verbose=verbose, solver=solver)
 
@@ -165,7 +168,7 @@ class OptimalHoldings(AbstractOptimalHoldings):
 
         return cvx.Minimize(to_minimise)
 
-    def _get_constraints(self, weights, factor_betas, risk, previous_weights, transaction_costs):
+    def _get_constraints(self, weights, factor_betas, risk, transaction_costs):
         """
         Get the constraints
 
@@ -193,8 +196,10 @@ class OptimalHoldings(AbstractOptimalHoldings):
             weights >= self.weights_min,
             weights <= self.weights_max,
             risk <= self.risk_cap**2,
-            transaction_costs <= self.transaction_cost_max,
         ]
+
+        if self.transaction_cost_max:
+            constraints.append(transaction_costs <= self.transaction_cost_max)
 
         return constraints
 
@@ -205,7 +210,7 @@ class OptimalHoldings(AbstractOptimalHoldings):
         factor_min=-10.0,
         weights_max=0.55,
         weights_min=-0.55,
-        transaction_cost_max=100,
+        transaction_cost_max=None,
     ):
         self.risk_cap = risk_cap
         self.factor_max = factor_max

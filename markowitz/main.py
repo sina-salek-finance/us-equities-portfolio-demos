@@ -354,15 +354,18 @@ def main():
                 )[0]
             else:
                 previous_weights = optimal_weights_dict[last_date][0]
-            previous_weights = pd.DataFrame(alpha_vectors.loc[end_date]).join(
-                previous_weights.rename("prev")
-            )["prev"].fillna(0)
+            previous_weights = (
+                pd.DataFrame(alpha_vectors.loc[end_date])
+                .join(previous_weights.rename("prev"))["prev"]
+                .fillna(0)
+            )
             optimal_weights_dict[end_date] = OptimalHoldingsStrictFactor(
                 weights_max=0.02,
                 weights_min=-0.02,
                 risk_cap=0.0015,
                 factor_max=0.015,
                 factor_min=-0.015,
+                transaction_cost_max=5,
             ).find(
                 alpha_vectors.loc[end_date],
                 factor_betas_dict[end_date],

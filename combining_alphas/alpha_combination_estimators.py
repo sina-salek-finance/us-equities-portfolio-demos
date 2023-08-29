@@ -76,23 +76,21 @@ def non_overlapping_estimators(x, y, classifiers, n_skip_samples, validate=False
         for classifier in classifiers:
             clf_params = classifier.get_params()
             classifier.fit(X_train, y_train, eval_set=[(X_valid, y_valid)])
-            clf_params['n_estimators'] = classifier.get_booster().best_iteration + 1
-            clf_params['early_stopping_rounds'] = None
+            clf_params["n_estimators"] = classifier.get_booster().best_iteration + 1
+            clf_params["early_stopping_rounds"] = None
             final_clf = xgb.XGBClassifier(**clf_params)
-            final_clf.fit(
-                pd.concat([X_train, X_valid]) ,
-                pd.concat([y_train, y_valid]))
+            final_clf.fit(pd.concat([X_train, X_valid]), pd.concat([y_train, y_valid]))
             trained_clfs.append(final_clf)
         return trained_clfs
     else:
         return [
-            classifier.fit(
-                pd.concat([X_train, X_valid]) ,
-                pd.concat([y_train, y_valid]))
+            classifier.fit(pd.concat([X_train, X_valid]), pd.concat([y_train, y_valid]))
             for classifier in classifiers
         ]
 
 
 class NoOverlapVoter(NoOverlapVoterAbstract):
-    def _non_overlapping_estimators(self, x, y, classifiers, n_skip_samples, validate=False):
+    def _non_overlapping_estimators(
+        self, x, y, classifiers, n_skip_samples, validate=False
+    ):
         return non_overlapping_estimators(x, y, classifiers, n_skip_samples, validate)

@@ -34,19 +34,17 @@ def get_all_backtest_data(
         #         """Potentially comment the following line out"""
         #         end_date = end_date - pd.DateOffset(days = 1)
 
-        start_date = end_date - pd.DateOffset(years=1)
+        start_date = end_date - pd.DateOffset(days=60)
 
         while start_date not in trading_calendar.closes.index:
             start_date -= pd.DateOffset(days=1)
 
         date_tickers = alpha_vectors.loc[end_date].index
-        returns = (
-            get_pricing(
-                data_portal, trading_calendar, date_tickers, start_date, end_date
-            )
-            .pct_change()[1:]
-            .fillna(0)
+        close = get_pricing(
+            data_portal, trading_calendar, date_tickers, start_date, end_date
         )
+
+        returns = close.pct_change()[1:].fillna(0)
 
         num_factor_exposures = 20
         pca = fit_pca(returns, num_factor_exposures, "full")
@@ -71,14 +69,16 @@ def get_all_backtest_data(
         risk_idiosyncratic_var_vector_dict[end_date] = get_idiosyncratic_var_vector(
             returns, risk_idiosyncratic_var_matrix
         )
-        lambdas_dict[end_date] = 1/ get_pricing(
+        volume = get_pricing(
             data_portal,
             trading_calendar,
             date_tickers,
             start_date,
             end_date,
             field="volume",
-        ).mean()
+        )
+        average_dollar_volume = np.nanmean(close * volume, axis = 0)
+        lambdas_dict[end_date] = 1 / (average_dollar_volume * 10)
 
     return (
         factor_betas_dict,
