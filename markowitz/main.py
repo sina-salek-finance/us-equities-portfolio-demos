@@ -2,7 +2,7 @@ import argparse
 
 import numpy as np
 import pandas as pd
-from tqdm import tqdm
+
 import pickle
 
 from zipline.pipeline import Pipeline, domain
@@ -11,18 +11,16 @@ from zipline import get_calendar
 from zipline.data import bundles
 from zipline.data.data_portal import DataPortal
 
-
 from utils.zipline_func_wrappers import (
     build_pipeline_engine,
     get_pricing,
 )
 
-from sklearn.ensemble import RandomForestClassifier
 from xgboost import XGBClassifier
 
 from alpha_library.alphas import (
     momentum_1yr,
-    mean_reversion_5day_sector_neutral_smoothed,
+    mean_reversion_5day_smoothed,
     overnight_sentiment_smoothed,
     MarketDispersion,
     MarketVolatility,
@@ -34,20 +32,7 @@ from utils.alphalens_func_wrappers import show_sample_results
 
 from combining_alphas.utils import train_valid_test_split
 
-from combining_alphas.model_evaluation import rank_features_by_importance
-from utils import (
-    data_visualisation_utils as dvis,
-)
-
 from combining_alphas.alpha_combination_estimators import NoOverlapVoter
-
-from portfolio_optimisation.data_preprocessing import (
-    get_factor_betas,
-    get_factor_returns,
-    get_factor_cov_matrix,
-    get_idiosyncratic_var_matrix,
-    get_idiosyncratic_var_vector,
-)
 
 from markowitz.backtesting.data_processing import get_all_backtest_data
 
@@ -78,8 +63,9 @@ import pyfolio as pf
 
 import time
 
+import yfinance as yf
 
-# sector = Sector()
+
 def main():
     parser = argparse.ArgumentParser()
 
@@ -124,13 +110,11 @@ def main():
         .values.tolist()
     )
 
-    # sector = Sector()
-
     pipeline = Pipeline(screen=universe)
-    pipeline.add(momentum_1yr(252, universe), "Momentum_1YR")  # , sector),
+    pipeline.add(momentum_1yr(252, universe), "Momentum_1YR")
     pipeline.add(
-        mean_reversion_5day_sector_neutral_smoothed(20, universe),  # , sector),
-        "Mean_Reversion_Sector_Neutral_Smoothed",
+        mean_reversion_5day_smoothed(20, universe),
+        "Mean_Reversion_Smoothed",
     )
     pipeline.add(
         overnight_sentiment_smoothed(2, 10, universe), "Overnight_Sentiment_Smoothed"
@@ -194,7 +178,18 @@ def main():
         pd.date_range(start=factor_start_date, end=universe_end_date, freq="BQS")
     )
 
-    # TODO: after implementing sector class, one-hot encode sector
+    sectors_map = {}
+    for asset in all_factors.reset_index().level_1.unique():
+        try:
+            sectors_map[asset]=yf.Ticker(asset.symbol).info['sector']
+        except:
+            sectors_map[asset]='no_sector'
+
+    all_factors["sector"] = all_factors.reset_index().level_1.map(sectors_map).values
+
+    sector_columns = pd.get_dummies(all_factors["sector"])
+    all_factors = all_factors.join(sector_columns)
+    all_factors = all_factors.drop("sector", axis=1)
 
     all_factors["target"] = all_factors.groupby(level=1)["return_5d"].shift(-5)
 
@@ -220,7 +215,7 @@ def main():
     plt.show()
 
     features = [
-        "Mean_Reversion_Sector_Neutral_Smoothed",
+        "Mean_Reversion_Smoothed",
         "Momentum_1YR",
         "Overnight_Sentiment_Smoothed",
         "adv_120d",
@@ -237,7 +232,7 @@ def main():
         "month_start",
         "qtr_end",
         "qtr_start",
-    ]  # + sector_columns
+    ] + sector_columns.columns.tolist()
     target_label = "target"
 
     temp = all_factors.dropna().copy()
@@ -275,7 +270,7 @@ def main():
     )
 
     factor_names = [
-        "Mean_Reversion_Sector_Neutral_Smoothed",
+        "Mean_Reversion_Smoothed",
         "Momentum_1YR",
         "Overnight_Sentiment_Smoothed",
         "adv_120d",

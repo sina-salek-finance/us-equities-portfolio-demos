@@ -1,5 +1,3 @@
-from zipline.pipeline.classifiers import Classifier
-from zipline.utils.numpy_utils import int64_dtype
 from zipline.pipeline.data import USEquityPricing
 from zipline.pipeline.factors import (
     CustomFactor,
@@ -12,30 +10,11 @@ from zipline.pipeline.factors import (
 import numpy as np
 
 
-class Sector(Classifier):
-    # TODO: Dummy sector, fix before actual use
-
-    dtype = int64_dtype
-    window_length = 0
-    inputs = ()
-    missing_value = -1
-
-    def __init__(self):
-        self.data = np.load("../../../Downloads/data.npy")
-
-    def _compute(self, arrays, dates, assets, mask):
-        return np.where(
-            mask,
-            self.data[assets],
-            self.missing_value,
-        )
-
-
-def momentum_1yr(window_length, universe):  # , sector):
+def momentum_1yr(window_length, universe):
     return Returns(window_length=window_length, mask=universe).demean().rank().zscore()
 
 
-def mean_reversion_5day_sector_neutral_smoothed(window_length, universe):  # , sector):
+def mean_reversion_5day_smoothed(window_length, universe):
     unsmoothed_factor = (
         -Returns(window_length=window_length, mask=universe).demean().rank().zscore()
     )

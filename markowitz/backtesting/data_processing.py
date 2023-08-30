@@ -31,20 +31,15 @@ def get_all_backtest_data(
             trading_calendar.closes.index
         )
     ):
-        #         """Potentially comment the following line out"""
-        #         end_date = end_date - pd.DateOffset(days = 1)
-
-        start_date = end_date - pd.DateOffset(days=60)
+        start_date = end_date - pd.DateOffset(years=5)
 
         while start_date not in trading_calendar.closes.index:
             start_date -= pd.DateOffset(days=1)
 
         date_tickers = alpha_vectors.loc[end_date].index
-        close = get_pricing(
+        returns = get_pricing(
             data_portal, trading_calendar, date_tickers, start_date, end_date
-        )
-
-        returns = close.pct_change()[1:].fillna(0)
+        ).pct_change()[1:].fillna(0)
 
         num_factor_exposures = 20
         pca = fit_pca(returns, num_factor_exposures, "full")
@@ -69,15 +64,21 @@ def get_all_backtest_data(
         risk_idiosyncratic_var_vector_dict[end_date] = get_idiosyncratic_var_vector(
             returns, risk_idiosyncratic_var_matrix
         )
-        volume = get_pricing(
+        start_date_60 = start_date - pd.DateOffset(days=60)
+        d60_close = get_pricing(
+            data_portal, trading_calendar, date_tickers, start_date_60, end_date
+        ).pct_change()[1:].fillna(0)
+
+        d60_volume = get_pricing(
             data_portal,
             trading_calendar,
             date_tickers,
-            start_date,
+            start_date_60,
             end_date,
             field="volume",
         )
-        average_dollar_volume = np.nanmean(close * volume, axis = 0)
+        average_dollar_volume = np.nanmean(d60_close * d60_volume, axis=0)
+        # scaling factor for transaction cost
         lambdas_dict[end_date] = 1 / (average_dollar_volume * 10)
 
     return (
