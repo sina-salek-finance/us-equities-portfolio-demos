@@ -198,7 +198,7 @@ class OptimalHoldings(AbstractOptimalHoldings):
             risk <= self.risk_cap**2,
         ]
 
-        if self.transaction_cost_max:
+        if self.transaction_cost_max is not None:
             constraints.append(transaction_costs <= self.transaction_cost_max)
 
         return constraints

@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 
 import pickle
+from tqdm import tqdm
 
 from zipline.pipeline import Pipeline, domain
 from zipline.pipeline.factors import AverageDollarVolume
@@ -16,7 +17,7 @@ from utils.zipline_func_wrappers import (
     get_pricing,
 )
 
-from xgboost import XGBClassifier
+from sklearn.ensemble import RandomForestClassifier
 
 from alpha_library.alphas import (
     momentum_1yr,
@@ -26,7 +27,7 @@ from alpha_library.alphas import (
     MarketVolatility,
 )
 
-from utils.tidy_functions import spearman_cor, fit_pca
+from utils.tidy_functions import spearman_cor
 
 from utils.alphalens_func_wrappers import show_sample_results
 
@@ -59,6 +60,8 @@ from markowitz.backtesting.performance_analysis_funcs import (
     before_trading_start,
 )
 
+from utils import data_visualisation_utils as dvis
+
 import pyfolio as pf
 
 import time
@@ -76,14 +79,14 @@ def main():
         "--end_date", type=str, help="End date for backtest", default="2016-01-05"
     )
     parser.add_argument(
-        "--years_back", type=int, help="Number of years to backtest", default=7
+        "--years_back", type=int, help="Number of years to backtest", default=3
     )
 
     args = parser.parse_args()
 
     universe_end_date = pd.to_datetime(args.end_date)
 
-    factor_start_date = universe_end_date - pd.DateOffset(years=args.years_back)
+    factor_start_date = universe_end_date - pd.DateOffset(years=args.years_back, days=1)
 
     universe = AverageDollarVolume(window_length=120).top(500)
     trading_calendar = get_calendar("NYSE")
@@ -100,15 +103,15 @@ def main():
         adjustment_reader=bundle_data.adjustment_reader,
     )
 
-    universe_tickers = (
-        engine.run_pipeline(
-            Pipeline(screen=universe, domain=domain.US_EQUITIES),
-            universe_end_date,
-            universe_end_date,
-        )
-        .index.get_level_values(1)
-        .values.tolist()
-    )
+    # universe_tickers = (
+    #     engine.run_pipeline(
+    #         Pipeline(screen=universe, domain=domain.US_EQUITIES),
+    #         universe_end_date,
+    #         universe_end_date,
+    #     )
+    #     .index.get_level_values(1)
+    #     .values.tolist()
+    # )
 
     pipeline = Pipeline(screen=universe)
     pipeline.add(momentum_1yr(252, universe), "Momentum_1YR")
@@ -178,18 +181,17 @@ def main():
         pd.date_range(start=factor_start_date, end=universe_end_date, freq="BQS")
     )
 
-    sectors_map = {}
-    for asset in all_factors.reset_index().level_1.unique():
-        try:
-            sectors_map[asset]=yf.Ticker(asset.symbol).info['sector']
-        except:
-            sectors_map[asset]='no_sector'
-
-    all_factors["sector"] = all_factors.reset_index().level_1.map(sectors_map).values
-
-    sector_columns = pd.get_dummies(all_factors["sector"])
-    all_factors = all_factors.join(sector_columns)
-    all_factors = all_factors.drop("sector", axis=1)
+    # uncomment to get sector coding
+    # sectors_map = {}
+    # for asset in all_factors.reset_index().level_1.unique():
+    #     try:
+    #         sectors_map[asset] = yf.Ticker(asset.symbol).info["sector"]
+    #     except:
+    #         sectors_map[asset] = "no_sector"
+    # all_factors["sector"] = all_factors.reset_index().level_1.map(sectors_map).values
+    # sector_columns = pd.get_dummies(all_factors["sector"])
+    # all_factors = all_factors.join(sector_columns)
+    # all_factors = all_factors.drop("sector", axis=1)
 
     all_factors["target"] = all_factors.groupby(level=1)["return_5d"].shift(-5)
 
@@ -232,14 +234,16 @@ def main():
         "month_start",
         "qtr_end",
         "qtr_start",
-    ] + sector_columns.columns.tolist()
+    ]  # + sector_columns.columns.tolist()
     target_label = "target"
 
     temp = all_factors.dropna().copy()
     X = temp[features]
     y = temp[target_label]
 
-    X_train, X_test, y_train, y_test = train_valid_test_split(X, y, 0.8, 0.2)
+    X_train, X_valid, X_test, y_train, y_valid, y_test = train_valid_test_split(
+        X, y, 0.6, 0.2, 0.2
+    )
 
     n_days = 10
     n_stocks = 500
@@ -247,19 +251,15 @@ def main():
     clf_random_state = 0
 
     clf_parameters = {
-        "objective": "binary:logistic",
-        "eval_metric": "logloss",
-        "eta": 0.1,
-        "max_depth": 5,
-        "min_child_weight": 5,
-        "subsample": 0.8,
-        "colsample_bytree": 0.8,
-        "n_estimators": 1000,
-        "early_stopping_rounds": 10,
-        "seed": clf_random_state,
+        "criterion": "entropy",
+        "min_samples_leaf": n_stocks * n_days,
+        "oob_score": True,
+        "n_jobs": -1,
+        "random_state": clf_random_state,
     }
+    n_trees_l = [50, 100, 250, 500, 1000]
 
-    all_assets = all_factors.index.levels[1].values.tolist()
+    all_assets = list(all_factors.reset_index().level_1.unique())
 
     all_pricing = get_pricing(
         data_portal,
@@ -267,6 +267,43 @@ def main():
         all_assets,
         factor_start_date,
         universe_end_date,
+    )
+
+    train_score = []
+    valid_score = []
+    oob_score = []
+
+    for n_trees in tqdm(n_trees_l, desc="Training Models", unit="Model"):
+        clf = RandomForestClassifier(n_trees, **clf_parameters)
+
+        clf_nov = NoOverlapVoter(clf, "soft")
+        clf_nov.fit(X_train, y_train)
+
+        train_score.append(clf_nov.score(X_train, y_train.astype(int).values))
+        valid_score.append(clf_nov.score(X_valid, y_valid.astype(int).values))
+        oob_score.append(clf_nov.oob_score_)
+
+    dvis.plot(
+        [n_trees_l] * 3,
+        [train_score, valid_score, oob_score],
+        ["train", "validation", "oob"],
+        "Random Forrest Accuracy",
+        "Number of Trees",
+    )
+
+    # number of trees achieving the best oob score
+    n_trees = n_trees_l[np.argmax(oob_score)]
+
+    clf = RandomForestClassifier(n_trees, **clf_parameters)
+    clf_nov = NoOverlapVoter(clf, "soft")
+    clf_nov.fit(pd.concat([X_train, X_valid]), pd.concat([y_train, y_valid]))
+
+    print(
+        "train: {}, oob: {}, valid: {}".format(
+            clf_nov.score(X_train, y_train.values),
+            clf_nov.score(X_valid, y_valid.values),
+            clf_nov.oob_score_,
+        )
     )
 
     factor_names = [
@@ -277,45 +314,12 @@ def main():
         "volatility_20d",
     ]
 
-    # train_score = []
-
-    clf = XGBClassifier(**clf_parameters)
-
-    clf_nov = NoOverlapVoter(clf, "soft")
-    clf_nov.fit(X_train, y_train, validate=True)
-
-    # TODO: implement an evaluation method
-
-    # train_score.append(clf_nov.score(X_train, y_train.astype(int).values))
-    # oob_score.append(clf_nov.oob_score_)
-
-    # dvis.plot(
-    #     [n_trees_l] * 3,
-    #     [train_score, valid_score, oob_score],
-    #     ["train", "validation", "oob"],
-    #     "Random Forrest Accuracy",
-    #     "Number of Trees",
-    # )
-
-    # n_trees = 500
-    #
-    # clf = XGBClassifier(n_trees, **clf_parameters)
-    # clf_nov = NoOverlapVoter(clf, "soft")
-    # TODO: make a final fit method that takes in all data
-    # clf_nov.fit(pd.concat([X_train, X_valid]), pd.concat([y_train, y_valid]))
-
-    # print(
-    #     "train: {}, oob: {}, valid: {}".format(
-    #         clf_nov.score(X_train, y_train.values),
-    #         clf_nov.score(X_valid, y_valid.values),
-    #         clf_nov.oob_score_,
-    #     )
-    # )
-
     show_sample_results(
         all_factors, X_train, clf_nov, factor_names, pricing=all_pricing
     )
-
+    show_sample_results(
+        all_factors, X_valid, clf_nov, factor_names, pricing=all_pricing
+    )
     show_sample_results(all_factors, X_test, clf_nov, factor_names, pricing=all_pricing)
 
     prob_array = [-1, 1]

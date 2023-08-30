@@ -37,9 +37,13 @@ def get_all_backtest_data(
             start_date -= pd.DateOffset(days=1)
 
         date_tickers = alpha_vectors.loc[end_date].index
-        returns = get_pricing(
-            data_portal, trading_calendar, date_tickers, start_date, end_date
-        ).pct_change()[1:].fillna(0)
+        returns = (
+            get_pricing(
+                data_portal, trading_calendar, date_tickers, start_date, end_date
+            )
+            .pct_change()[1:]
+            .fillna(0)
+        )
 
         num_factor_exposures = 20
         pca = fit_pca(returns, num_factor_exposures, "full")
@@ -65,9 +69,11 @@ def get_all_backtest_data(
             returns, risk_idiosyncratic_var_matrix
         )
         start_date_60 = start_date - pd.DateOffset(days=60)
+        while start_date_60 not in trading_calendar.closes.index:
+            start_date_60 -= pd.DateOffset(days=1)
         d60_close = get_pricing(
             data_portal, trading_calendar, date_tickers, start_date_60, end_date
-        ).pct_change()[1:].fillna(0)
+        ).fillna(0)
 
         d60_volume = get_pricing(
             data_portal,
