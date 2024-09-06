@@ -4,22 +4,23 @@ import numpy as np
 import pandas as pd
 
 import pickle
-from tqdm import tqdm
 
-from zipline.pipeline import Pipeline, domain
+
+from zipline.pipeline import Pipeline
 from zipline.pipeline.factors import AverageDollarVolume
 from zipline import get_calendar
 from zipline.data import bundles
 from zipline.data.data_portal import DataPortal
 
-from utils.zipline_func_wrappers import (
+from alphalab.utils.zipline_func_wrappers import (
     build_pipeline_engine,
     get_pricing,
 )
 
+from tqdm import tqdm
 from sklearn.ensemble import RandomForestClassifier
 
-from alpha_library.alphas import (
+from alphalab.alpha_library.alphas import (
     momentum_1yr,
     mean_reversion_5day_smoothed,
     overnight_sentiment_smoothed,
@@ -27,17 +28,17 @@ from alpha_library.alphas import (
     MarketVolatility,
 )
 
-from utils.tidy_functions import spearman_cor
+from alphalab.utils.tidy_functions import spearman_cor
 
-from utils.alphalens_func_wrappers import show_sample_results
+from alphalab.utils.alphalens_func_wrappers import show_sample_results
 
-from combining_alphas.utils import train_valid_test_split
+from alphalab.combining_alphas.utils import train_valid_test_split
 
-from combining_alphas.alpha_combination_estimators import NoOverlapVoter
+from alphalab.combining_alphas.alpha_combination_estimators import NoOverlapVoter
 
-from markowitz.backtesting.data_processing import get_all_backtest_data
+from alphalab.markowitz.backtesting.data_processing import get_all_backtest_data
 
-from markowitz.portfolio_optimisation.optimisation_classes import (
+from alphalab.markowitz.portfolio_optimisation.optimisation_classes import (
     OptimalHoldingsStrictFactor,
 )
 
@@ -47,24 +48,21 @@ import pandas_datareader.data as web
 import cvxpy as cvx
 
 from zipline.pipeline.factors import (
-    CustomFactor,
-    DailyReturns,
     Returns,
     SimpleMovingAverage,
     AnnualizedVolatility,
 )
 
-from markowitz.backtesting.performance_analysis_funcs import (
+from alphalab.markowitz.backtesting.performance_analysis_funcs import (
     analyze,
     initialize,
     before_trading_start,
 )
 
-from utils import data_visualisation_utils as dvis
+from alphalab.utils import data_visualisation_utils as dvis
 
 import pyfolio as pf
 
-import yfinance as yf
 import mlflow
 import os
 import time
