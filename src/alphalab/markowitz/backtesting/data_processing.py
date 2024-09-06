@@ -1,4 +1,4 @@
-from ..portfolio_optimisation.data_preprocessing import (
+from alphalab.markowitz.portfolio_optimisation.data_preprocessing import (
     get_factor_betas,
     get_factor_returns,
     get_factor_cov_matrix,
@@ -6,11 +6,11 @@ from ..portfolio_optimisation.data_preprocessing import (
     get_idiosyncratic_var_vector,
 )
 
-from utils.zipline_func_wrappers import (
+from alphalab.utils.zipline_func_wrappers import (
     get_pricing,
 )
 
-from utils.tidy_functions import fit_pca
+from alphalab.utils.tidy_functions import fit_pca
 
 import pandas as pd
 import numpy as np

@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 
-from utils.tidy_functions import (
+from alphalab.utils.tidy_functions import (
     get_factor_sharpe_ratio,
     plot_factor_returns,
 )

@@ -12,6 +12,8 @@ from zipline import get_calendar
 from zipline.data import bundles
 from zipline.data.data_portal import DataPortal
 
+import pyfolio as pf
+
 from alphalab.utils.zipline_func_wrappers import (
     build_pipeline_engine,
     get_pricing,
@@ -60,8 +62,6 @@ from alphalab.markowitz.backtesting.performance_analysis_funcs import (
 )
 
 from alphalab.utils import data_visualisation_utils as dvis
-
-import pyfolio as pf
 
 import mlflow
 import os
