@@ -13,11 +13,11 @@ This project showcases a machine learning-based portfolio optimisation strategy 
 
 This project relies on several libraries, including Zipline, Alphalens, and PyFolio, which have C-based dependencies. To simplify the installation process and avoid potential issues, we currently support installation via Conda only.
 
-## Step 1: Install Conda
+### Step 1: Install Conda
 
 If you don't have Conda installed, you can download and install it from the [Anaconda website](https://www.anaconda.com/) or use the lightweight [Miniconda installer](https://docs.conda.io/en/latest/miniconda.html). Follow the installation instructions provided on the website to set it up on your Mac.
 
-## Step 2: Set Up the Environment
+### Step 2: Set Up the Environment
 
 Once Conda is installed, you can create a new environment using the `environment.yml` file provided in the repository. This file contains all the necessary dependencies for the project.
 
@@ -30,16 +30,16 @@ Once Conda is installed, you can create a new environment using the `environment
     conda activate pconst310
     ```
 
-## Step 3: Ingest Quandl Data
+### Step 3: Ingest Quandl Data
 
 Zipline requires Quandl data for backtesting. To ingest this data, you'll need a Quandl API key. Follow these steps to obtain and configure your API key:
 
-### Get a Quandl API Key:
+#### Get a Quandl API Key:
 
 1. Visit the [NASDAQ Data Link website](https://data.nasdaq.com/) and sign up for an account.
 2. Once registered, navigate to your account settings to find your API key.
 
-### Configure the API Key:
+#### Configure the API Key:
 
 1. Open your terminal.
 2. Use a text editor to open your `.bash_profile` or `.bashrc` file. For example, you can use `nano`:
@@ -61,7 +61,7 @@ Zipline requires Quandl data for backtesting. To ingest this data, you'll need a
     source ~/.bash_profile
     ```
 
-### Ingest the Data:
+#### Ingest the Data:
 
 Run the following command in your terminal to ingest the Quandl data:
 
@@ -97,9 +97,6 @@ This will initiate the process, utilising the integrated strategies and tools to
 
 - **Backtesting and Performance Analysis:**  
   We use Zipline for rigorous backtesting of the portfolio, evaluating its historical performance. PyFolio provides detailed performance analysis, offering insights into the strategy's risk and return characteristics, which support informed decision-making.
-
-## TODO
-Things to add as the next steps.
 
 ## Licence
 This project is licensed under the MIT Licence.
