@@ -84,21 +84,26 @@ To run the portfolio optimisation strategy, execute the `orchestrator.py` script
 This will initiate the process, utilising the integrated strategies and tools to optimise the portfolio based on the predefined parameters and data.
 
 ## Features
-- Feature 1
-- Feature 2
+
+- **Optimised Estimator for 5-Day-Ahead Performance:**  
+  Our estimator is designed to optimise for 5-day-ahead equity performance. The challenge of overlapping labels, which can disrupt the independent and identically distributed (i.i.d) assumption and lead to overfitting, is addressed using the `NoOverlapVoter`. This tool trains separate estimators on non-overlapping data sets and combines them through a voting mechanism. For further insights, refer to [Advances in Financial Machine Learning](https://www.wiley.com/en-br/Advances+in+Financial+Machine+Learning-p-9781119482086) by Marcos Lopez de Prado.
+
+- **Alpha Factor Performance:**  
+  Despite notable differences in factor performances across three sets, our AI ALPHA consistently achieves positive results during the validation phase. The accompanying visualisation illustrates the effectiveness of combining alphas.
+
+  ![combining_alphas.png](src/images/combining_alphas.png)
+
+- **Convex Optimisation for Portfolio Construction:**  
+  Utilising a custom `cvxpy`-based convex optimisation class, we integrate combined alpha factors, risk factors, and transaction costs to construct a balanced portfolio of equities. This ensures that all critical variables are considered for optimal portfolio design.
+
+- **Backtesting and Performance Analysis:**  
+  We use Zipline for rigorous backtesting of the portfolio, evaluating its historical performance. PyFolio provides detailed performance analysis, offering insights into the strategy's risk and return characteristics, which support informed decision-making.
 
 ## TODO
 Things to add as the next steps.
 
 ## Licence
 This project is licensed under the MIT Licence.
-
-## Visuals
-![img.png](src/images/img.png)
-![img_1.png](src/images/img_1.png)
-![img_2.png](src/images/img_2.png)
-![img_3.png](src/images/img_3.png)
-
 ## Acknowledgements
 
 In making this repo, I have heavily borrowed from: 
