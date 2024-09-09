@@ -1,8 +1,7 @@
 # us-equities-portfolio-demos
 
 ## Description
-This project presents an advanced portfolio optimisation strategy tailored for US equities. It integrates risk and alpha factors while accounting for linear transaction costs to achieve optimal performance. Central to this strategy is a Random Forest-based non-overlapping estimator, designed to enhance medium-frequency trading by effectively combining alpha factors. For a robust analysis of these factors, Alphalens is utilised to thoroughly evaluate their performance. Comprehensive backtesti...
-
+This project showcases a machine learning-based portfolio optimisation strategy specifically designed for US equities. By seamlessly integrating risk and alpha factors while accounting for linear transaction costs, it aims to achieve superior performance. At the heart of this strategy is a sophisticated Random Forest-based non-overlapping estimator, which significantly enhances medium-frequency trading by effectively amalgamating diverse alpha factors. For a comprehensive evaluation of these factors, Alphalens is employed to rigorously assess their performance. The strategy is further validated through extensive backtesting, ensuring robustness and reliability.
 ## Table of Contents
 - [Installation](#installation)
 - [Usage](#usage)
