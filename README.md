@@ -7,13 +7,10 @@ This project presents an advanced portfolio optimisation strategy tailored for U
 - [Installation](#installation)
 - [Usage](#usage)
 - [Features](#features)
-- [Contributing](#contributing)
 - [Licence](#licence)
-- [Contact Information](#contact-information)
 - [Acknowledgements](#acknowledgements)
 
 ## Installation
-# Installation
 
 This project relies on several libraries, including Zipline, Alphalens, and PyFolio, which have C-based dependencies. To simplify the installation process and avoid potential issues, we currently support installation via Conda only.
 
@@ -101,3 +98,9 @@ This project is licensed under the MIT Licence.
 ![img_1.png](src/images/img_1.png)
 ![img_2.png](src/images/img_2.png)
 ![img_3.png](src/images/img_3.png)
+
+## Acknowledgements
+
+In making this repo, I have heavily borrowed from: 
+- various projects in Udacity's [AI for Trading course](https://www.udacity.com/enrollment/nd880), and
+- [Advances in Financial Machine Learning](https://www.wiley.com/en-br/Advances+in+Financial+Machine+Learning-p-9781119482086) by Marcos Lopez de Prado.
