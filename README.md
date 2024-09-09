@@ -1,15 +1,16 @@
 # us-equities-portfolio-demos
 
 ## Description
-This project presents an advanced portfolio optimization strategy tailored for US equities. It integrates risk and alpha factors while accounting for linear transaction costs to achieve optimal performance. Central to this strategy is a Random Forest-based non-overlapping estimator, designed to enhance medium-frequency trading by effectively combining alpha factors. For a robust analysis of these factors, Alphalens is utilized to thoroughly evaluate their performance. Comprehensive backtesting and dynamic portfolio rebalancing are executed using Zipline, ensuring the strategy's practical applicability and reliability in real-world scenarios.
+This project presents an advanced portfolio optimisation strategy tailored for US equities. It integrates risk and alpha factors while accounting for linear transaction costs to achieve optimal performance. Central to this strategy is a Random Forest-based non-overlapping estimator, designed to enhance medium-frequency trading by effectively combining alpha factors. For a robust analysis of these factors, Alphalens is utilised to thoroughly evaluate their performance. Comprehensive backtesti...
+
 ## Table of Contents
 - [Installation](#installation)
 - [Usage](#usage)
 - [Features](#features)
 - [Contributing](#contributing)
-- [License](#license)
+- [Licence](#licence)
 - [Contact Information](#contact-information)
-- [Acknowledgments](#acknowledgments)
+- [Acknowledgements](#acknowledgements)
 
 ## Installation
 # Installation
@@ -73,7 +74,7 @@ zipline ingest -b quandl
 ```
 
 ## Usage
-To run the portfolio optimization strategy, execute the `orchestrator.py` script located under the `src/alphalab` directory. This script orchestrates the entire process of data ingestion, model training, and portfolio rebalancing.
+To run the portfolio optimisation strategy, execute the `orchestrator.py` script located under the `src/alphalab` directory. This script orchestrates the entire process of data ingestion, model training, and portfolio rebalancing.
 
 1. Open your terminal.
 2. Navigate to the `src/alphalab` directory in your project.
@@ -83,7 +84,7 @@ To run the portfolio optimization strategy, execute the `orchestrator.py` script
    python orchestrator.py
    ```
    
-This will initiate the process, utilizing the integrated strategies and tools to optimize the portfolio based on the predefined parameters and data.
+This will initiate the process, utilising the integrated strategies and tools to optimise the portfolio based on the predefined parameters and data.
 
 ## Features
 - Feature 1
@@ -92,8 +93,8 @@ This will initiate the process, utilizing the integrated strategies and tools to
 ## TODO
 Things to add as the next steps.
 
-## License
-This project is licensed under the MIT License.
+## Licence
+This project is licensed under the MIT Licence.
 
 ## Visuals
 ![img.png](src/images/img.png)
