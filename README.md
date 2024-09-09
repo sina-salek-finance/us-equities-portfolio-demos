@@ -91,7 +91,7 @@ This will initiate the process, utilising the integrated strategies and tools to
 - **Alpha Factor Performance:**  
   Despite notable differences in factor performances across three sets, our AI ALPHA consistently achieves positive results during the validation phase. The accompanying visualisation illustrates the effectiveness of combining alphas.
 
-  ![combining_alphas.png](src/images/combining_alphas.png)
+  ![combining_alphas.png](images/combining_alphas.png)
 
 - **Convex Optimisation for Portfolio Construction:**  
   Utilising a custom `cvxpy`-based convex optimisation class, we integrate combined alpha factors, risk factors, and transaction costs to construct a balanced portfolio of equities. This ensures that all critical variables are considered for optimal portfolio design.
