@@ -1,3 +1,17 @@
+# us-equities-portfolio-demos
+
+## Description
+This project presents an advanced portfolio optimization strategy tailored for US equities. It integrates risk and alpha factors while accounting for linear transaction costs to achieve optimal performance. Central to this strategy is a Random Forest-based non-overlapping estimator, designed to enhance medium-frequency trading by effectively combining alpha factors. For a robust analysis of these factors, Alphalens is utilized to thoroughly evaluate their performance. Comprehensive backtesting and dynamic portfolio rebalancing are executed using Zipline, ensuring the strategy's practical applicability and reliability in real-world scenarios.
+## Table of Contents
+- [Installation](#installation)
+- [Usage](#usage)
+- [Features](#features)
+- [Contributing](#contributing)
+- [License](#license)
+- [Contact Information](#contact-information)
+- [Acknowledgments](#acknowledgments)
+
+## Installation
 # Installation
 
 This project relies on several libraries, including Zipline, Alphalens, and PyFolio, which have C-based dependencies. To simplify the installation process and avoid potential issues, we currently support installation via Conda only.
@@ -56,3 +70,33 @@ Run the following command in your terminal to ingest the Quandl data:
 
 ```bash
 zipline ingest -b quandl
+```
+
+## Usage
+To run the portfolio optimization strategy, execute the `orchestrator.py` script located under the `src/alphalab` directory. This script orchestrates the entire process of data ingestion, model training, and portfolio rebalancing.
+
+1. Open your terminal.
+2. Navigate to the `src/alphalab` directory in your project.
+3. Run the following command:
+
+   ```bash
+   python orchestrator.py
+   ```
+   
+This will initiate the process, utilizing the integrated strategies and tools to optimize the portfolio based on the predefined parameters and data.
+
+## Features
+- Feature 1
+- Feature 2
+
+## TODO
+Things to add as the next steps.
+
+## License
+This project is licensed under the MIT License.
+
+## Visuals
+![img.png](src/images/img.png)
+![img_1.png](src/images/img_1.png)
+![img_2.png](src/images/img_2.png)
+![img_3.png](src/images/img_3.png)
