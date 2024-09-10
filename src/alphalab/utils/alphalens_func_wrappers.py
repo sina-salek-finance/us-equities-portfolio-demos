@@ -1,13 +1,9 @@
-import matplotlib.pyplot as plt
-
-from alphalab.utils.tidy_functions import (
-    get_factor_sharpe_ratio,
-    plot_factor_returns,
-)
-
-import pandas as pd
-import numpy as np
 import alphalens as al
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
+from alphalab.utils.tidy_functions import get_factor_sharpe_ratio, plot_factor_returns
 
 
 def build_factor_data(factor_data, pricing):

@@ -1,81 +1,60 @@
 import argparse
+import os
+import pickle
+import time
 
+import cvxpy as cvx
+import mlflow
 import numpy as np
 import pandas as pd
-
-import pickle
-
-
-from zipline.pipeline import Pipeline
-from zipline.pipeline.factors import AverageDollarVolume
-from zipline import get_calendar
+import pandas_datareader.data as web
+import pyfolio as pf
+from sklearn.ensemble import RandomForestClassifier
+from tqdm import tqdm
+from zipline import get_calendar, run_algorithm
 from zipline.data import bundles
 from zipline.data.data_portal import DataPortal
-
-import pyfolio as pf
-
-from alphalab.utils.zipline_func_wrappers import (
-    build_pipeline_engine,
-    get_pricing,
+from zipline.pipeline import Pipeline
+from zipline.pipeline.factors import (
+    AnnualizedVolatility,
+    AverageDollarVolume,
+    Returns,
+    SimpleMovingAverage,
 )
-
-from tqdm import tqdm
-from sklearn.ensemble import RandomForestClassifier
 
 from alphalab.alpha_library.alphas import (
-    momentum_1yr,
-    mean_reversion_5day_smoothed,
-    overnight_sentiment_smoothed,
     MarketDispersion,
     MarketVolatility,
+    mean_reversion_5day_smoothed,
+    momentum_1yr,
+    overnight_sentiment_smoothed,
 )
-
-from alphalab.utils.tidy_functions import spearman_cor
-
-from alphalab.utils.alphalens_func_wrappers import show_sample_results
-
-from alphalab.combining_alphas.utils import train_valid_test_split
-
 from alphalab.combining_alphas.alpha_combination_estimators import NoOverlapVoter
-
+from alphalab.combining_alphas.utils import train_valid_test_split
 from alphalab.markowitz.backtesting.data_processing import get_all_backtest_data
-
+from alphalab.markowitz.backtesting.performance_analysis_funcs import (
+    analyze,
+    before_trading_start,
+    initialize,
+)
 from alphalab.markowitz.portfolio_optimisation.optimisation_classes import (
     OptimalHoldingsStrictFactor,
 )
-
-from zipline import run_algorithm
-import pandas_datareader.data as web
-
-import cvxpy as cvx
-
-from zipline.pipeline.factors import (
-    Returns,
-    SimpleMovingAverage,
-    AnnualizedVolatility,
-)
-
-from alphalab.markowitz.backtesting.performance_analysis_funcs import (
-    analyze,
-    initialize,
-    before_trading_start,
-)
-
 from alphalab.utils import data_visualisation_utils as dvis
-
-import mlflow
-import os
-import time
+from alphalab.utils.alphalens_func_wrappers import show_sample_results
+from alphalab.utils.tidy_functions import spearman_cor
+from alphalab.utils.zipline_func_wrappers import build_pipeline_engine, get_pricing
 
 
 def main():
-
     with mlflow.start_run():
-
         parser = argparse.ArgumentParser()
 
         parser.add_argument(
-            "--data_bundle", type=str, help="Zipline data bundle to use", default="quandl"
+            "--data_bundle",
+            type=str,
+            help="Zipline data bundle to use",
+            default="quandl",
         )
         parser.add_argument(
             "--end_date", type=str, help="End date for backtest", default="2016-01-05"
@@ -88,7 +67,9 @@ def main():
 
         universe_end_date = pd.to_datetime(args.end_date)
 
-        factor_start_date = universe_end_date - pd.DateOffset(years=args.years_back, days=1)
+        factor_start_date = universe_end_date - pd.DateOffset(
+            years=args.years_back, days=1
+        )
 
         mlflow.log_param("universe_end_date", universe_end_date)
         mlflow.log_param("factor_start_date", factor_start_date)
@@ -126,7 +107,8 @@ def main():
             "Mean_Reversion_Smoothed",
         )
         pipeline.add(
-            overnight_sentiment_smoothed(2, 10, universe), "Overnight_Sentiment_Smoothed"
+            overnight_sentiment_smoothed(2, 10, universe),
+            "Overnight_Sentiment_Smoothed",
         )
 
         pipeline.add(
@@ -138,7 +120,8 @@ def main():
             "volatility_120d",
         )
         pipeline.add(
-            AverageDollarVolume(window_length=20, mask=universe).rank().zscore(), "adv_20d"
+            AverageDollarVolume(window_length=20, mask=universe).rank().zscore(),
+            "adv_20d",
         )
         pipeline.add(
             AverageDollarVolume(window_length=120, mask=universe).rank().zscore(),
@@ -146,7 +129,9 @@ def main():
         )
 
         pipeline.add(
-            SimpleMovingAverage(inputs=[MarketDispersion(mask=universe)], window_length=20),
+            SimpleMovingAverage(
+                inputs=[MarketDispersion(mask=universe)], window_length=20
+            ),
             "dispersion_20d",
         )
         pipeline.add(
@@ -161,9 +146,13 @@ def main():
 
         pipeline.add(Returns(window_length=5, mask=universe).quantiles(2), "return_5d")
         pipeline.add(Returns(window_length=5, mask=universe), "return_5d_no_quantile")
-        pipeline.add(Returns(window_length=5, mask=universe).quantiles(25), "return_5d_p")
+        pipeline.add(
+            Returns(window_length=5, mask=universe).quantiles(25), "return_5d_p"
+        )
 
-        all_factors = engine.run_pipeline(pipeline, factor_start_date, universe_end_date)
+        all_factors = engine.run_pipeline(
+            pipeline, factor_start_date, universe_end_date
+        )
 
         all_factors["is_Janaury"] = all_factors.index.get_level_values(0).month == 1
         all_factors["is_December"] = all_factors.index.get_level_values(0).month == 12
@@ -187,21 +176,8 @@ def main():
             pd.date_range(start=factor_start_date, end=universe_end_date, freq="BQS")
         )
 
-        # uncomment to get sector coding
-        # sectors_map = {}
-        # for asset in all_factors.reset_index().level_1.unique():
-        #     try:
-        #         sectors_map[asset] = yf.Ticker(asset.symbol).info["sector"]
-        #     except:
-        #         sectors_map[asset] = "no_sector"
-        # all_factors["sector"] = all_factors.reset_index().level_1.map(sectors_map).values
-        # sector_columns = pd.get_dummies(all_factors["sector"])
-        # all_factors = all_factors.join(sector_columns)
-        # all_factors = all_factors.drop("sector", axis=1)
-
         all_factors["target"] = all_factors.groupby(level=1)["return_5d"].shift(-5)
 
-        # TODO: why some targets are missing (resulting in -1)?
         all_factors = all_factors[all_factors["target"].isin([0, 1])]
 
         all_factors["target_p"] = all_factors.groupby(level=1)["return_5d_p"].shift(-5)
@@ -251,12 +227,11 @@ def main():
             X, y, 0.6, 0.2, 0.2
         )
 
-
         X_train.to_csv("X_train.csv")
         X_valid.to_csv("X_valid.csv")
         X_test.to_csv("X_test.csv")
         y_train.to_csv("y_train.csv")
-        y_valid.to_csv( "y_valid.csv")
+        y_valid.to_csv("y_valid.csv")
         y_test.to_csv("y_test.csv")
         mlflow.log_artifact("X_train.csv")
         mlflow.log_artifact("X_valid.csv")
@@ -265,14 +240,12 @@ def main():
         mlflow.log_artifact("y_valid.csv")
         mlflow.log_artifact("y_test.csv")
 
-
         os.remove("X_train.csv")
         os.remove("X_valid.csv")
         os.remove("X_test.csv")
         os.remove("y_train.csv")
         os.remove("y_valid.csv")
         os.remove("y_test.csv")
-
 
         n_days = 10
         n_stocks = 500
@@ -351,7 +324,9 @@ def main():
         show_sample_results(
             all_factors, X_valid, clf_nov, factor_names, pricing=all_pricing
         )
-        show_sample_results(all_factors, X_test, clf_nov, factor_names, pricing=all_pricing)
+        show_sample_results(
+            all_factors, X_test, clf_nov, factor_names, pricing=all_pricing
+        )
 
         prob_array = [-1, 1]
         alpha_vectors = pd.DataFrame(
@@ -415,7 +390,7 @@ def main():
         optimisation_time = time.time() - initial_time
 
         mlflow.log_metric("time_taken_to_optimise_across_test_set", optimisation_time)
-        with open("optimal_weights_dict.pickle", 'wb') as handle:
+        with open("optimal_weights_dict.pickle", "wb") as handle:
             pickle.dump(optimal_weights_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
         mlflow.log_artifact("optimal_weights_dict.pickle")
         os.remove("optimal_weights_dict.pickle")
@@ -455,7 +430,9 @@ def main():
 
         perf.sharpe.plot()
 
-        returns, positions, transactions = pf.utils.extract_rets_pos_txn_from_zipline(perf)
+        returns, positions, transactions = pf.utils.extract_rets_pos_txn_from_zipline(
+            perf
+        )
 
         pf.create_full_tear_sheet(
             returns,
@@ -463,6 +440,7 @@ def main():
             transactions=transactions,
             round_trips=True,
         )
+
 
 if __name__ == "__main__":
     main()

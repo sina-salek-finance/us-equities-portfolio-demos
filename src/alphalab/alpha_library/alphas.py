@@ -1,13 +1,12 @@
+import numpy as np
 from zipline.pipeline.data import USEquityPricing
 from zipline.pipeline.factors import (
+    AnnualizedVolatility,
     CustomFactor,
     DailyReturns,
     Returns,
     SimpleMovingAverage,
-    AnnualizedVolatility,
 )
-
-import numpy as np
 
 
 def momentum_1yr(window_length, universe):

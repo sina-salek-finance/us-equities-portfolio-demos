@@ -1,5 +1,5 @@
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 
 def get_factor_betas(pca, factor_beta_indices, factor_beta_columns):

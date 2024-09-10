@@ -1,9 +1,8 @@
-import zipline
-from zipline.pipeline.loaders import USEquityPricingLoader
-from zipline.pipeline.engine import SimplePipelineEngine
-from zipline.pipeline.data import USEquityPricing
-
 import pandas as pd
+import zipline
+from zipline.pipeline.data import USEquityPricing
+from zipline.pipeline.engine import SimplePipelineEngine
+from zipline.pipeline.loaders import USEquityPricingLoader
 
 
 class PricingLoader(object):

@@ -1,21 +1,20 @@
-from zipline.api import (
-    order_target_percent,
-    record,
-    symbol,
-    schedule_function,
-    date_rules,
-    time_rules,
-    calendars,
-    set_commission,
-    set_slippage,
-    get_open_orders,
-    get_datetime,
-)
+import pickle
 
 import pandas as pd
+from zipline.api import (
+    calendars,
+    date_rules,
+    get_datetime,
+    get_open_orders,
+    order_target_percent,
+    record,
+    schedule_function,
+    set_commission,
+    set_slippage,
+    symbol,
+    time_rules,
+)
 from zipline.finance import commission, slippage
-
-import pickle
 
 
 # with open('optimal_weights_dict.pickle', 'rb') as handle:

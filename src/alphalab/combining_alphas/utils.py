@@ -1,5 +1,5 @@
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 
 #  TODO: replace with a Bayesian optimization

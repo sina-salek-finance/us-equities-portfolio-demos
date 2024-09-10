@@ -1,12 +1,11 @@
 import abc
 
-from sklearn.ensemble import VotingClassifier
-from sklearn.base import clone
-from sklearn.preprocessing import LabelEncoder
-from sklearn.utils import Bunch
-
 import numpy as np
 import pandas as pd
+from sklearn.base import clone
+from sklearn.ensemble import VotingClassifier
+from sklearn.preprocessing import LabelEncoder
+from sklearn.utils import Bunch
 
 
 class NoOverlapVoterAbstract(VotingClassifier):

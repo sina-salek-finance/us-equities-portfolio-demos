@@ -1,19 +1,15 @@
+import numpy as np
+import pandas as pd
+
 from alphalab.markowitz.portfolio_optimisation.data_preprocessing import (
     get_factor_betas,
-    get_factor_returns,
     get_factor_cov_matrix,
+    get_factor_returns,
     get_idiosyncratic_var_matrix,
     get_idiosyncratic_var_vector,
 )
-
-from alphalab.utils.zipline_func_wrappers import (
-    get_pricing,
-)
-
 from alphalab.utils.tidy_functions import fit_pca
-
-import pandas as pd
-import numpy as np
+from alphalab.utils.zipline_func_wrappers import get_pricing
 
 
 def get_all_backtest_data(
