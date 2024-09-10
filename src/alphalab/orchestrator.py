@@ -4,6 +4,7 @@ import pickle
 import time
 
 import cvxpy as cvx
+import matplotlib.pyplot as plt
 import mlflow
 import numpy as np
 import pandas as pd
@@ -14,8 +15,12 @@ from tqdm import tqdm
 from zipline import run_algorithm
 
 from alphalab.combining_alphas.alpha_combination_estimators import NoOverlapVoter
+from alphalab.combining_alphas.feature_creation import (
+    add_factors_to_pipeline,
+    create_calendar_features,
+)
 from alphalab.combining_alphas.utils import train_valid_test_split
-from alphalab.constants import ALL_FEATURES
+from alphalab.constants import ALL_FEATURES, CLF_PARAMETERS, N_TREES_L
 from alphalab.markowitz.backtesting.data_processing import get_all_backtest_data
 from alphalab.markowitz.backtesting.performance_analysis_funcs import (
     analyze,
@@ -25,39 +30,13 @@ from alphalab.markowitz.backtesting.performance_analysis_funcs import (
 from alphalab.markowitz.portfolio_optimisation.optimisation_classes import (
     OptimalHoldingsStrictFactor,
 )
-from alphalab.utils import data_visualisation_utils as dvis
-from alphalab.utils.alphalens_func_wrappers import show_sample_results
-from alphalab.utils.tidy_functions import spearman_cor
-from alphalab.utils.zipline_func_wrappers import (
-    add_factors_to_pipeline,
-    get_data_pipline,
-    get_pricing,
+from alphalab.utils.plotting import (
+    plot_factor_performance,
+    plot_multiple_series,
+    plot_rolling_autocorrelation,
 )
+from alphalab.utils.zipline_func_wrappers import get_data_pipline, get_pricing
 
-
-def create_calendar_features(all_factors, factor_start_date, universe_end_date):
-    all_factors["is_Janaury"] = all_factors.index.get_level_values(0).month == 1
-    all_factors["is_December"] = all_factors.index.get_level_values(0).month == 12
-    all_factors["weekday"] = all_factors.index.get_level_values(0).weekday
-    all_factors["quarter"] = all_factors.index.get_level_values(0).quarter
-    all_factors["qtr_yr"] = (
-            all_factors.quarter.astype("str")
-            + "_"
-            + all_factors.index.get_level_values(0).year.astype("str")
-    )
-    all_factors["month_end"] = all_factors.index.get_level_values(0).isin(
-        pd.date_range(start=factor_start_date, end=universe_end_date, freq="BM")
-    )
-    all_factors["month_start"] = all_factors.index.get_level_values(0).isin(
-        pd.date_range(start=factor_start_date, end=universe_end_date, freq="BMS")
-    )
-    all_factors["qtr_end"] = all_factors.index.get_level_values(0).isin(
-        pd.date_range(start=factor_start_date, end=universe_end_date, freq="BQ")
-    )
-    all_factors["qtr_start"] = all_factors.index.get_level_values(0).isin(
-        pd.date_range(start=factor_start_date, end=universe_end_date, freq="BQS")
-    )
-    return all_factors
 
 def main():
     with mlflow.start_run():
@@ -76,6 +55,10 @@ def main():
             "--years_back", type=int, help="Number of years to backtest", default=3
         )
 
+        parser.add_argument(
+            "--eda_mode", type=bool, help="Run in EDA mode", default=False
+        )
+
         args = parser.parse_args()
 
         universe_end_date = pd.to_datetime(args.end_date)
@@ -88,9 +71,9 @@ def main():
         mlflow.log_param("factor_start_date", factor_start_date)
         mlflow.log_param("data_bundle", args.data_bundle)
 
-        universe, trading_calendar, bundle_data, engine, data_portal, pipeline = get_data_pipline()
+        universe, trading_calendar, bundle_data, engine, data_portal, pipeline = get_data_pipline(args)
 
-        pipeline = add_factors_to_pipeline(pipeline, universe)
+        pipeline = add_factors_to_pipeline(pipeline, universe, ALL_FEATURES)
 
         all_factors = engine.run_pipeline(
             pipeline, factor_start_date, universe_end_date
@@ -102,24 +85,8 @@ def main():
 
         all_factors = all_factors[all_factors["target"].isin([0, 1])]
 
-        all_factors["target_p"] = all_factors.groupby(level=1)["return_5d_p"].shift(-5)
-        all_factors["target_1"] = all_factors.groupby(level=1)["return_5d"].shift(-4)
-        all_factors["target_2"] = all_factors.groupby(level=1)["return_5d"].shift(-3)
-        all_factors["target_3"] = all_factors.groupby(level=1)["return_5d"].shift(-2)
-        all_factors["target_4"] = all_factors.groupby(level=1)["return_5d"].shift(-1)
-
-        # display the rolling auto-correlation of the target
-        from matplotlib import pyplot as plt
-
-        g = all_factors.dropna().groupby(level=0)
-        for i in range(4):
-            label = "target_" + str(i + 1)
-            ic = g.apply(spearman_cor, "target", label)
-            ic.plot(ylim=(-1, 1), label=label)
-        plt.legend(bbox_to_anchor=(1.04, 1), borderaxespad=0)
-        plt.title("Rolling Autocorrelation of Labels Shifted 1,2,3,4 Days")
-        plt.show()
-
+        if args.eda_mode:
+            plot_rolling_autocorrelation(all_factors)
 
         target_label = "target"
 
@@ -132,39 +99,20 @@ def main():
             X, y, 0.6, 0.2, 0.2
         )
 
-        X_train.to_csv("X_train.csv")
-        X_valid.to_csv("X_valid.csv")
-        X_test.to_csv("X_test.csv")
-        y_train.to_csv("y_train.csv")
-        y_valid.to_csv("y_valid.csv")
-        y_test.to_csv("y_test.csv")
-        mlflow.log_artifact("X_train.csv")
-        mlflow.log_artifact("X_valid.csv")
-        mlflow.log_artifact("X_test.csv")
-        mlflow.log_artifact("y_train.csv")
-        mlflow.log_artifact("y_valid.csv")
-        mlflow.log_artifact("y_test.csv")
-
-        os.remove("X_train.csv")
-        os.remove("X_valid.csv")
-        os.remove("X_test.csv")
-        os.remove("y_train.csv")
-        os.remove("y_valid.csv")
-        os.remove("y_test.csv")
-
-        n_days = 10
-        n_stocks = 500
-
-        clf_random_state = 0
-
-        clf_parameters = {
-            "criterion": "entropy",
-            "min_samples_leaf": n_stocks * n_days,
-            "oob_score": True,
-            "n_jobs": -1,
-            "random_state": clf_random_state,
+        datasets = {
+            "X_train": X_train,
+            "X_valid": X_valid,
+            "X_test": X_test,
+            "y_train": y_train,
+            "y_valid": y_valid,
+            "y_test": y_test
         }
-        n_trees_l = [50, 100, 250, 500, 1000]
+
+        for name, data in datasets.items():
+            filename = f"{name}.csv"
+            data.to_csv(filename)
+            mlflow.log_artifact(filename)
+            os.remove(filename)
 
         all_assets = list(all_factors.reset_index().level_1.unique())
 
@@ -180,8 +128,8 @@ def main():
         valid_score = []
         oob_score = []
 
-        for n_trees in tqdm(n_trees_l, desc="Training Models", unit="Model"):
-            clf = RandomForestClassifier(n_trees, **clf_parameters)
+        for n_trees in tqdm(N_TREES_L, desc="Training Models", unit="Model"):
+            clf = RandomForestClassifier(n_trees, **CLF_PARAMETERS)
 
             clf_nov = NoOverlapVoter(clf, "soft")
             clf_nov.fit(X_train, y_train)
@@ -190,20 +138,21 @@ def main():
             valid_score.append(clf_nov.score(X_valid, y_valid.astype(int).values))
             oob_score.append(clf_nov.oob_score_)
 
-        dvis.plot(
-            [n_trees_l] * 3,
-            [train_score, valid_score, oob_score],
-            ["train", "validation", "oob"],
-            "Random Forrest Accuracy",
-            "Number of Trees",
-        )
+        if args.eda_mode:
+            plot_multiple_series(
+                [N_TREES_L] * 3,
+                [train_score, valid_score, oob_score],
+                ["train", "validation", "oob"],
+                "Random Forrest Accuracy",
+                "Number of Trees",
+            )
 
         # number of trees achieving the best oob score
-        clf_parameters["n_estimators"] = n_trees_l[np.argmax(oob_score)]
+        CLF_PARAMETERS["n_estimators"] = N_TREES_L[np.argmax(oob_score)]
 
-        mlflow.log_param("clf_parameters", clf_parameters)
+        mlflow.log_param("clf_parameters", CLF_PARAMETERS)
 
-        clf = RandomForestClassifier(**clf_parameters)
+        clf = RandomForestClassifier(**CLF_PARAMETERS)
         clf_nov = NoOverlapVoter(clf, "soft")
         clf_nov.fit(pd.concat([X_train, X_valid]), pd.concat([y_train, y_valid]))
 
@@ -215,24 +164,7 @@ def main():
             )
         )
 
-        factor_names = [
-            "Mean_Reversion_Smoothed",
-            "Momentum_1YR",
-            "Overnight_Sentiment_Smoothed",
-            "adv_120d",
-            "volatility_20d",
-        ]
-
-        show_sample_results(
-            all_factors, X_train, clf_nov, factor_names, pricing=all_pricing
-        )
-        show_sample_results(
-            all_factors, X_valid, clf_nov, factor_names, pricing=all_pricing
-        )
-        show_sample_results(
-            all_factors, X_test, clf_nov, factor_names, pricing=all_pricing
-        )
-
+        plot_factor_performance(all_factors, clf_nov, X_train, all_pricing, X_valid, X_test)
         prob_array = [-1, 1]
         alpha_vectors = pd.DataFrame(
             clf_nov.predict_proba(X_test).dot(np.array(prob_array)), index=X_test.index

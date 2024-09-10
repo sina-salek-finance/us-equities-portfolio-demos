@@ -6,21 +6,8 @@ from zipline.data.data_portal import DataPortal
 from zipline.pipeline import Pipeline
 from zipline.pipeline.data import USEquityPricing
 from zipline.pipeline.engine import SimplePipelineEngine
-from zipline.pipeline.factors import (
-    AnnualizedVolatility,
-    AverageDollarVolume,
-    Returns,
-    SimpleMovingAverage,
-)
+from zipline.pipeline.factors import AverageDollarVolume
 from zipline.pipeline.loaders import USEquityPricingLoader
-
-from alphalab.alpha_library.alphas import (
-    MarketDispersion,
-    MarketVolatility,
-    mean_reversion_5day_smoothed,
-    momentum_1yr,
-    overnight_sentiment_smoothed,
-)
 
 
 class PricingLoader(object):
@@ -67,56 +54,7 @@ def get_pricing(
         data_frequency="daily",
     )
 
-def add_factors_to_pipeline(pipeline, universe):
-    pipeline.add(momentum_1yr(252, universe), "Momentum_1YR")
-    pipeline.add(
-        mean_reversion_5day_smoothed(20, universe),
-        "Mean_Reversion_Smoothed",
-    )
-    pipeline.add(
-        overnight_sentiment_smoothed(2, 10, universe),
-        "Overnight_Sentiment_Smoothed",
-    )
 
-    pipeline.add(
-        AnnualizedVolatility(window_length=20, mask=universe).rank().zscore(),
-        "volatility_20d",
-    )
-    pipeline.add(
-        AnnualizedVolatility(window_length=120, mask=universe).rank().zscore(),
-        "volatility_120d",
-    )
-    pipeline.add(
-        AverageDollarVolume(window_length=20, mask=universe).rank().zscore(),
-        "adv_20d",
-    )
-    pipeline.add(
-        AverageDollarVolume(window_length=120, mask=universe).rank().zscore(),
-        "adv_120d",
-    )
-
-    pipeline.add(
-        SimpleMovingAverage(
-            inputs=[MarketDispersion(mask=universe)], window_length=20
-        ),
-        "dispersion_20d",
-    )
-    pipeline.add(
-        SimpleMovingAverage(
-            inputs=[MarketDispersion(mask=universe)], window_length=120
-        ),
-        "dispersion_120d",
-    )
-
-    pipeline.add(MarketVolatility(window_length=20), "market_vol_20d")
-    pipeline.add(MarketVolatility(window_length=120), "market_vol_120d")
-
-    pipeline.add(Returns(window_length=5, mask=universe).quantiles(2), "return_5d")
-    pipeline.add(Returns(window_length=5, mask=universe), "return_5d_no_quantile")
-    pipeline.add(
-        Returns(window_length=5, mask=universe).quantiles(25), "return_5d_p"
-    )
-    return pipeline
 
 def get_data_pipline(args):
     universe = AverageDollarVolume(window_length=120).top(500)
