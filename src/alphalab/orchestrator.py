@@ -31,6 +31,7 @@ from alphalab.alpha_library.alphas import (
 )
 from alphalab.combining_alphas.alpha_combination_estimators import NoOverlapVoter
 from alphalab.combining_alphas.utils import train_valid_test_split
+from alphalab.constants import ALL_FEATURES
 from alphalab.markowitz.backtesting.data_processing import get_all_backtest_data
 from alphalab.markowitz.backtesting.performance_analysis_funcs import (
     analyze,
@@ -45,6 +46,101 @@ from alphalab.utils.alphalens_func_wrappers import show_sample_results
 from alphalab.utils.tidy_functions import spearman_cor
 from alphalab.utils.zipline_func_wrappers import build_pipeline_engine, get_pricing
 
+
+def get_data_pipline(args):
+    universe = AverageDollarVolume(window_length=120).top(500)
+    trading_calendar = get_calendar("NYSE")
+
+    bundle_data = bundles.load(args.data_bundle)
+    engine = build_pipeline_engine(bundle_data, trading_calendar)
+
+    data_portal = DataPortal(
+        bundle_data.asset_finder,
+        trading_calendar=trading_calendar,
+        first_trading_day=bundle_data.equity_daily_bar_reader.first_trading_day,
+        equity_minute_reader=None,
+        equity_daily_reader=bundle_data.equity_daily_bar_reader,
+        adjustment_reader=bundle_data.adjustment_reader,
+    )
+
+    pipeline = Pipeline(screen=universe)
+
+    return universe, trading_calendar, bundle_data, engine, data_portal, pipeline
+
+def add_factors_to_pipeline(pipeline, universe):
+    pipeline.add(momentum_1yr(252, universe), "Momentum_1YR")
+    pipeline.add(
+        mean_reversion_5day_smoothed(20, universe),
+        "Mean_Reversion_Smoothed",
+    )
+    pipeline.add(
+        overnight_sentiment_smoothed(2, 10, universe),
+        "Overnight_Sentiment_Smoothed",
+    )
+
+    pipeline.add(
+        AnnualizedVolatility(window_length=20, mask=universe).rank().zscore(),
+        "volatility_20d",
+    )
+    pipeline.add(
+        AnnualizedVolatility(window_length=120, mask=universe).rank().zscore(),
+        "volatility_120d",
+    )
+    pipeline.add(
+        AverageDollarVolume(window_length=20, mask=universe).rank().zscore(),
+        "adv_20d",
+    )
+    pipeline.add(
+        AverageDollarVolume(window_length=120, mask=universe).rank().zscore(),
+        "adv_120d",
+    )
+
+    pipeline.add(
+        SimpleMovingAverage(
+            inputs=[MarketDispersion(mask=universe)], window_length=20
+        ),
+        "dispersion_20d",
+    )
+    pipeline.add(
+        SimpleMovingAverage(
+            inputs=[MarketDispersion(mask=universe)], window_length=120
+        ),
+        "dispersion_120d",
+    )
+
+    pipeline.add(MarketVolatility(window_length=20), "market_vol_20d")
+    pipeline.add(MarketVolatility(window_length=120), "market_vol_120d")
+
+    pipeline.add(Returns(window_length=5, mask=universe).quantiles(2), "return_5d")
+    pipeline.add(Returns(window_length=5, mask=universe), "return_5d_no_quantile")
+    pipeline.add(
+        Returns(window_length=5, mask=universe).quantiles(25), "return_5d_p"
+    )
+    return pipeline
+
+def create_calendar_features(all_factors, factor_start_date, universe_end_date):
+    all_factors["is_Janaury"] = all_factors.index.get_level_values(0).month == 1
+    all_factors["is_December"] = all_factors.index.get_level_values(0).month == 12
+    all_factors["weekday"] = all_factors.index.get_level_values(0).weekday
+    all_factors["quarter"] = all_factors.index.get_level_values(0).quarter
+    all_factors["qtr_yr"] = (
+            all_factors.quarter.astype("str")
+            + "_"
+            + all_factors.index.get_level_values(0).year.astype("str")
+    )
+    all_factors["month_end"] = all_factors.index.get_level_values(0).isin(
+        pd.date_range(start=factor_start_date, end=universe_end_date, freq="BM")
+    )
+    all_factors["month_start"] = all_factors.index.get_level_values(0).isin(
+        pd.date_range(start=factor_start_date, end=universe_end_date, freq="BMS")
+    )
+    all_factors["qtr_end"] = all_factors.index.get_level_values(0).isin(
+        pd.date_range(start=factor_start_date, end=universe_end_date, freq="BQ")
+    )
+    all_factors["qtr_start"] = all_factors.index.get_level_values(0).isin(
+        pd.date_range(start=factor_start_date, end=universe_end_date, freq="BQS")
+    )
+    return all_factors
 
 def main():
     with mlflow.start_run():
@@ -75,106 +171,15 @@ def main():
         mlflow.log_param("factor_start_date", factor_start_date)
         mlflow.log_param("data_bundle", args.data_bundle)
 
-        universe = AverageDollarVolume(window_length=120).top(500)
-        trading_calendar = get_calendar("NYSE")
+        universe, trading_calendar, bundle_data, engine, data_portal, pipeline = get_data_pipline()
 
-        bundle_data = bundles.load(args.data_bundle)
-        engine = build_pipeline_engine(bundle_data, trading_calendar)
-
-        data_portal = DataPortal(
-            bundle_data.asset_finder,
-            trading_calendar=trading_calendar,
-            first_trading_day=bundle_data.equity_daily_bar_reader.first_trading_day,
-            equity_minute_reader=None,
-            equity_daily_reader=bundle_data.equity_daily_bar_reader,
-            adjustment_reader=bundle_data.adjustment_reader,
-        )
-
-        # universe_tickers = (
-        #     engine.run_pipeline(
-        #         Pipeline(screen=universe, domain=domain.US_EQUITIES),
-        #         universe_end_date,
-        #         universe_end_date,
-        #     )
-        #     .index.get_level_values(1)
-        #     .values.tolist()
-        # )
-
-        pipeline = Pipeline(screen=universe)
-        pipeline.add(momentum_1yr(252, universe), "Momentum_1YR")
-        pipeline.add(
-            mean_reversion_5day_smoothed(20, universe),
-            "Mean_Reversion_Smoothed",
-        )
-        pipeline.add(
-            overnight_sentiment_smoothed(2, 10, universe),
-            "Overnight_Sentiment_Smoothed",
-        )
-
-        pipeline.add(
-            AnnualizedVolatility(window_length=20, mask=universe).rank().zscore(),
-            "volatility_20d",
-        )
-        pipeline.add(
-            AnnualizedVolatility(window_length=120, mask=universe).rank().zscore(),
-            "volatility_120d",
-        )
-        pipeline.add(
-            AverageDollarVolume(window_length=20, mask=universe).rank().zscore(),
-            "adv_20d",
-        )
-        pipeline.add(
-            AverageDollarVolume(window_length=120, mask=universe).rank().zscore(),
-            "adv_120d",
-        )
-
-        pipeline.add(
-            SimpleMovingAverage(
-                inputs=[MarketDispersion(mask=universe)], window_length=20
-            ),
-            "dispersion_20d",
-        )
-        pipeline.add(
-            SimpleMovingAverage(
-                inputs=[MarketDispersion(mask=universe)], window_length=120
-            ),
-            "dispersion_120d",
-        )
-
-        pipeline.add(MarketVolatility(window_length=20), "market_vol_20d")
-        pipeline.add(MarketVolatility(window_length=120), "market_vol_120d")
-
-        pipeline.add(Returns(window_length=5, mask=universe).quantiles(2), "return_5d")
-        pipeline.add(Returns(window_length=5, mask=universe), "return_5d_no_quantile")
-        pipeline.add(
-            Returns(window_length=5, mask=universe).quantiles(25), "return_5d_p"
-        )
+        pipeline = add_factors_to_pipeline(pipeline, universe)
 
         all_factors = engine.run_pipeline(
             pipeline, factor_start_date, universe_end_date
         )
 
-        all_factors["is_Janaury"] = all_factors.index.get_level_values(0).month == 1
-        all_factors["is_December"] = all_factors.index.get_level_values(0).month == 12
-        all_factors["weekday"] = all_factors.index.get_level_values(0).weekday
-        all_factors["quarter"] = all_factors.index.get_level_values(0).quarter
-        all_factors["qtr_yr"] = (
-            all_factors.quarter.astype("str")
-            + "_"
-            + all_factors.index.get_level_values(0).year.astype("str")
-        )
-        all_factors["month_end"] = all_factors.index.get_level_values(0).isin(
-            pd.date_range(start=factor_start_date, end=universe_end_date, freq="BM")
-        )
-        all_factors["month_start"] = all_factors.index.get_level_values(0).isin(
-            pd.date_range(start=factor_start_date, end=universe_end_date, freq="BMS")
-        )
-        all_factors["qtr_end"] = all_factors.index.get_level_values(0).isin(
-            pd.date_range(start=factor_start_date, end=universe_end_date, freq="BQ")
-        )
-        all_factors["qtr_start"] = all_factors.index.get_level_values(0).isin(
-            pd.date_range(start=factor_start_date, end=universe_end_date, freq="BQS")
-        )
+        all_factors = create_calendar_features(all_factors, factor_start_date, universe_end_date)
 
         all_factors["target"] = all_factors.groupby(level=1)["return_5d"].shift(-5)
 
@@ -198,29 +203,12 @@ def main():
         plt.title("Rolling Autocorrelation of Labels Shifted 1,2,3,4 Days")
         plt.show()
 
-        features = [
-            "Mean_Reversion_Smoothed",
-            "Momentum_1YR",
-            "Overnight_Sentiment_Smoothed",
-            "adv_120d",
-            "adv_20d",
-            "dispersion_120d",
-            "dispersion_20d",
-            "market_vol_120d",
-            "market_vol_20d",
-            "volatility_20d",
-            "is_Janaury",
-            "is_December",
-            "weekday",
-            "month_end",
-            "month_start",
-            "qtr_end",
-            "qtr_start",
-        ]  # + sector_columns.columns.tolist()
+
         target_label = "target"
 
         temp = all_factors.dropna().copy()
-        X = temp[features]
+
+        X = temp[ALL_FEATURES]
         y = temp[target_label]
 
         X_train, X_valid, X_test, y_train, y_valid, y_test = train_valid_test_split(

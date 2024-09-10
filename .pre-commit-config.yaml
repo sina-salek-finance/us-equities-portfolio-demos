@@ -31,12 +31,6 @@ repos:
           - id: isort
             args: [--profile, "black"]  # Set to use Black's style for import sorting
 
-    # Black for Python code formatting, specific to Jupyter notebooks
-    - repo: https://github.com/psf/black
-      rev: 23.12.1  # Updated version
-      hooks:
-          - id: black-jupyter
-            language_version: python3.12  # Specify the Python version
 
     # nbstripout for removing outputs from Jupyter notebooks
     - repo: https://github.com/kynan/nbstripout
