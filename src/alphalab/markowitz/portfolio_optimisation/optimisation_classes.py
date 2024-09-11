@@ -1,9 +1,11 @@
+import logging
 from abc import ABC, abstractmethod
 
 import cvxpy as cvx
 import numpy as np
 import pandas as pd
 
+logger = logging.getLogger(__name__)
 
 def predict_portfolio_risk(
     factor_betas, factor_cov_matrix, idiosyncratic_var_matrix, weights
@@ -111,6 +113,9 @@ class AbstractOptimalHoldings(ABC):
         max_iters=None,
         verbose=False,
     ):
+        if solver is None:
+            max_iters = None
+            logger.warning("No solver specified. Setting max_iters=None.")
         weights = cvx.Variable(len(alpha_vector))
         risk = self._get_risk(
             weights,
@@ -281,10 +286,10 @@ def determine_optimal_weights_for_all_dates(
                 factor_betas_dict[end_date],
                 risk_factor_cov_matrix_dict[end_date],
                 risk_idiosyncratic_var_vector_dict[end_date],
-                cvx.ECOS,
+                None,
                 previous_weights,
                 lambdas_dict[end_date],
-                500,
+                None,
             )
 
             last_date = end_date
