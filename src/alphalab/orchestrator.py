@@ -220,16 +220,14 @@ def main():
         mlflow.log_artifact("perf.csv")
         os.remove("perf.csv")
 
-        plt.figure(figsize=(10, 6))
-        plt.plot(perf.index, perf.portfolio_value, label="Portfolio Value")
-        plt.xlabel("Date")
-        plt.ylabel("Portfolio Value")
-        plt.legend()
-        plt.title(
-            "Portfolio Backtest with Forecasted Returns, Covariance Matrix, and Transaction Costs"
+        plot_multiple_series(
+            x_series=[perf.index],
+            y_series=[perf.portfolio_value],
+            labels=["Portfolio Value"],
+            title="Portfolio Backtest with Forecasted Returns, Covariance Matrix, and Transaction Costs",
+            x_label="Date",
+            y_label="Portfolio Value"
         )
-        plt.show()
-
         perf.sharpe.plot()
 
         returns, positions, transactions = pf.utils.extract_rets_pos_txn_from_zipline(
