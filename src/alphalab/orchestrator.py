@@ -3,7 +3,6 @@ import os
 import pickle
 import time
 
-import cvxpy as cvx
 import matplotlib.pyplot as plt
 import mlflow
 import numpy as np
@@ -28,7 +27,7 @@ from alphalab.markowitz.backtesting.performance_analysis_funcs import (
     initialize,
 )
 from alphalab.markowitz.portfolio_optimisation.optimisation_classes import (
-    OptimalHoldingsStrictFactor,
+    determine_optimal_weights_for_all_dates,
 )
 from alphalab.utils.plotting import (
     plot_factor_performance,
@@ -179,7 +178,6 @@ def main():
 
         initial_time = time.time()
 
-        optimal_weights_dict = {}
 
         valid_dates = pd.DatetimeIndex(
             set(alpha_vectors.reset_index()["level_0"].unique()).intersection(
@@ -187,42 +185,9 @@ def main():
             )
         )
 
-        for idx, end_date in enumerate(valid_dates):
-            try:
-                if idx == 0:
-                    previous_weights = pd.DataFrame(
-                        np.zeros_like(alpha_vectors.loc[end_date]),
-                        index=alpha_vectors.loc[end_date].index,
-                    )[0]
-                else:
-                    previous_weights = optimal_weights_dict[last_date][0]
-                previous_weights = (
-                    pd.DataFrame(alpha_vectors.loc[end_date])
-                    .join(previous_weights.rename("prev"))["prev"]
-                    .fillna(0)
-                )
-                optimal_weights_dict[end_date] = OptimalHoldingsStrictFactor(
-                    weights_max=0.02,
-                    weights_min=-0.02,
-                    risk_cap=0.0015,
-                    factor_max=0.015,
-                    factor_min=-0.015,
-                    transaction_cost_max=5,
-                ).find(
-                    alpha_vectors.loc[end_date],
-                    factor_betas_dict[end_date],
-                    risk_factor_cov_matrix_dict[end_date],
-                    risk_idiosyncratic_var_vector_dict[end_date],
-                    cvx.ECOS,
-                    previous_weights,
-                    lambdas_dict[end_date],
-                    500,
-                )
-
-                last_date = end_date
-            except ValueError as e:
-                print(e)
-                optimal_weights_dict[end_date] = optimal_weights_dict[last_date]
+        optimal_weights_dict = determine_optimal_weights_for_all_dates(
+            valid_dates, alpha_vectors, factor_betas_dict, risk_factor_cov_matrix_dict, risk_idiosyncratic_var_vector_dict, lambdas_dict
+        )
 
         optimisation_time = time.time() - initial_time
 
