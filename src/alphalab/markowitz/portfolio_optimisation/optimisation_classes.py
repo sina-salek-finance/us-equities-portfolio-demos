@@ -245,7 +245,15 @@ class OptimalHoldingsStrictFactor(OptimalHoldings):
 
         return cvx.Minimize(to_minimise)
 
-def determine_optimal_weights_for_all_dates( valid_dates, alpha_vectors, factor_betas_dict, risk_factor_cov_matrix_dict, risk_idiosyncratic_var_vector_dict, lambdas_dict):
+
+def determine_optimal_weights_for_all_dates(
+    valid_dates,
+    alpha_vectors,
+    factor_betas_dict,
+    risk_factor_cov_matrix_dict,
+    risk_idiosyncratic_var_vector_dict,
+    lambdas_dict,
+):
     optimal_weights_dict = {}
     for idx, end_date in enumerate(valid_dates):
         try:

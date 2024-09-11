@@ -1,4 +1,3 @@
-
 import matplotlib.pyplot as plt
 import seaborn as sns
 
@@ -14,7 +13,9 @@ def plot_rolling_autocorrelation(all_factors):
     all_factors (DataFrame): A pandas DataFrame containing the data with a multi-index.
     """
     for i in range(5):
-        all_factors[f"target_{i}"] = all_factors.groupby(level=1)["return_5d"].shift(-5 + i)
+        all_factors[f"target_{i}"] = all_factors.groupby(level=1)["return_5d"].shift(
+            -5 + i
+        )
 
     grouped_factors = all_factors.dropna().groupby(level=0)
 
@@ -26,7 +27,7 @@ def plot_rolling_autocorrelation(all_factors):
         ic = grouped_factors.apply(spearman_cor, "target_0", label)
         ic.plot(ylim=(-1, 1), label=label, linewidth=2)
 
-    plt.legend(title="Lag", bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.legend(title="Lag", bbox_to_anchor=(1.05, 1), loc="upper left")
     plt.title("Rolling Autocorrelation of Shifted Targets", fontsize=14)
     plt.xlabel("Time", fontsize=12)
     plt.ylabel("Spearman Correlation", fontsize=12)
@@ -56,24 +57,27 @@ def plot_multiple_series(x_series, y_series, labels, title="", x_label="", y_lab
     plt.title(title, fontsize=16)
     plt.xlabel(x_label, fontsize=12)
     plt.ylabel(y_label, fontsize=12)
-    plt.legend(title="Series", bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.legend(title="Series", bbox_to_anchor=(1.05, 1), loc="upper left")
     plt.tight_layout()
 
     plt.show()
 
-def plot_factor_performance(all_factors,clf_nov, X_train, all_pricing, X_valid, X_test):
+
+def plot_factor_performance(
+    all_factors, clf_nov, X_train, all_pricing, X_valid, X_test
+):
     """
     Plots the performance of factors on the training, validation, and test sets.
 
     """
 
     factor_names = [
-                "Mean_Reversion_Smoothed",
-                "Momentum_1YR",
-                "Overnight_Sentiment_Smoothed",
-                "adv_120d",
-                "volatility_20d",
-            ]
+        "Mean_Reversion_Smoothed",
+        "Momentum_1YR",
+        "Overnight_Sentiment_Smoothed",
+        "adv_120d",
+        "volatility_20d",
+    ]
 
     show_sample_results(
         all_factors, X_train, clf_nov, factor_names, pricing=all_pricing
@@ -81,6 +85,4 @@ def plot_factor_performance(all_factors,clf_nov, X_train, all_pricing, X_valid, 
     show_sample_results(
         all_factors, X_valid, clf_nov, factor_names, pricing=all_pricing
     )
-    show_sample_results(
-        all_factors, X_test, clf_nov, factor_names, pricing=all_pricing
-    )
+    show_sample_results(all_factors, X_test, clf_nov, factor_names, pricing=all_pricing)

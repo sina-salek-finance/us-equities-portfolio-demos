@@ -30,13 +30,29 @@ def add_factors_to_pipeline(pipeline, universe, all_factors):
     factor_functions = {
         "Momentum_1YR": lambda: momentum_1yr(252, universe),
         "Mean_Reversion_Smoothed": lambda: mean_reversion_5day_smoothed(20, universe),
-        "Overnight_Sentiment_Smoothed": lambda: overnight_sentiment_smoothed(2, 10, universe),
-        "volatility_20d": lambda: AnnualizedVolatility(window_length=20, mask=universe).rank().zscore(),
-        "volatility_120d": lambda: AnnualizedVolatility(window_length=120, mask=universe).rank().zscore(),
-        "adv_20d": lambda: AverageDollarVolume(window_length=20, mask=universe).rank().zscore(),
-        "adv_120d": lambda: AverageDollarVolume(window_length=120, mask=universe).rank().zscore(),
-        "dispersion_20d": lambda: SimpleMovingAverage(inputs=[MarketDispersion(mask=universe)], window_length=20),
-        "dispersion_120d": lambda: SimpleMovingAverage(inputs=[MarketDispersion(mask=universe)], window_length=120),
+        "Overnight_Sentiment_Smoothed": lambda: overnight_sentiment_smoothed(
+            2, 10, universe
+        ),
+        "volatility_20d": lambda: AnnualizedVolatility(window_length=20, mask=universe)
+        .rank()
+        .zscore(),
+        "volatility_120d": lambda: AnnualizedVolatility(
+            window_length=120, mask=universe
+        )
+        .rank()
+        .zscore(),
+        "adv_20d": lambda: AverageDollarVolume(window_length=20, mask=universe)
+        .rank()
+        .zscore(),
+        "adv_120d": lambda: AverageDollarVolume(window_length=120, mask=universe)
+        .rank()
+        .zscore(),
+        "dispersion_20d": lambda: SimpleMovingAverage(
+            inputs=[MarketDispersion(mask=universe)], window_length=20
+        ),
+        "dispersion_120d": lambda: SimpleMovingAverage(
+            inputs=[MarketDispersion(mask=universe)], window_length=120
+        ),
         "market_vol_20d": lambda: MarketVolatility(window_length=20),
         "market_vol_120d": lambda: MarketVolatility(window_length=120),
         "return_5d": lambda: Returns(window_length=5, mask=universe).quantiles(2),
@@ -49,6 +65,7 @@ def add_factors_to_pipeline(pipeline, universe, all_factors):
             pipeline.add(factor_function(), factor_name)
 
     return pipeline
+
 
 def create_calendar_features(all_factors, factor_start_date, universe_end_date):
     """
@@ -68,13 +85,15 @@ def create_calendar_features(all_factors, factor_start_date, universe_end_date):
     all_factors["is_December"] = date_index.month == 12
     all_factors["weekday"] = date_index.weekday
     all_factors["quarter"] = date_index.quarter
-    all_factors["qtr_yr"] = all_factors.quarter.astype("str") + "_" + date_index.year.astype("str")
+    all_factors["qtr_yr"] = (
+        all_factors.quarter.astype("str") + "_" + date_index.year.astype("str")
+    )
 
     frequencies = {
         "month_end": "BM",
         "month_start": "BMS",
         "qtr_end": "BQ",
-        "qtr_start": "BQS"
+        "qtr_start": "BQS",
     }
 
     for feature_name, freq in frequencies.items():

@@ -70,7 +70,9 @@ def main():
         mlflow.log_param("factor_start_date", factor_start_date)
         mlflow.log_param("data_bundle", args.data_bundle)
 
-        universe, trading_calendar, bundle_data, engine, data_portal, pipeline = get_data_pipline(args)
+        universe, trading_calendar, bundle_data, engine, data_portal, pipeline = (
+            get_data_pipline(args)
+        )
 
         pipeline = add_factors_to_pipeline(pipeline, universe, ALL_FEATURES)
 
@@ -78,7 +80,9 @@ def main():
             pipeline, factor_start_date, universe_end_date
         )
 
-        all_factors = create_calendar_features(all_factors, factor_start_date, universe_end_date)
+        all_factors = create_calendar_features(
+            all_factors, factor_start_date, universe_end_date
+        )
 
         all_factors["target"] = all_factors.groupby(level=1)["return_5d"].shift(-5)
 
@@ -104,7 +108,7 @@ def main():
             "X_test": X_test,
             "y_train": y_train,
             "y_valid": y_valid,
-            "y_test": y_test
+            "y_test": y_test,
         }
 
         for name, data in datasets.items():
@@ -163,7 +167,9 @@ def main():
             )
         )
 
-        plot_factor_performance(all_factors, clf_nov, X_train, all_pricing, X_valid, X_test)
+        plot_factor_performance(
+            all_factors, clf_nov, X_train, all_pricing, X_valid, X_test
+        )
         prob_array = [-1, 1]
         alpha_vectors = pd.DataFrame(
             clf_nov.predict_proba(X_test).dot(np.array(prob_array)), index=X_test.index
@@ -178,7 +184,6 @@ def main():
 
         initial_time = time.time()
 
-
         valid_dates = pd.DatetimeIndex(
             set(alpha_vectors.reset_index()["level_0"].unique()).intersection(
                 trading_calendar.closes.index
@@ -186,7 +191,12 @@ def main():
         )
 
         optimal_weights_dict = determine_optimal_weights_for_all_dates(
-            valid_dates, alpha_vectors, factor_betas_dict, risk_factor_cov_matrix_dict, risk_idiosyncratic_var_vector_dict, lambdas_dict
+            valid_dates,
+            alpha_vectors,
+            factor_betas_dict,
+            risk_factor_cov_matrix_dict,
+            risk_idiosyncratic_var_vector_dict,
+            lambdas_dict,
         )
 
         optimisation_time = time.time() - initial_time
@@ -226,7 +236,7 @@ def main():
             labels=["Portfolio Value"],
             title="Portfolio Backtest with Forecasted Returns, Covariance Matrix, and Transaction Costs",
             x_label="Date",
-            y_label="Portfolio Value"
+            y_label="Portfolio Value",
         )
         perf.sharpe.plot()
 

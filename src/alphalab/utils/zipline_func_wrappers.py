@@ -55,7 +55,6 @@ def get_pricing(
     )
 
 
-
 def get_data_pipline(args):
     universe = AverageDollarVolume(window_length=120).top(500)
     trading_calendar = get_calendar("NYSE")
