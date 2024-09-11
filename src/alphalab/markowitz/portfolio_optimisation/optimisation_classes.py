@@ -296,3 +296,4 @@ def determine_optimal_weights_for_all_dates(
         except ValueError as e:
             print(e)
             optimal_weights_dict[end_date] = optimal_weights_dict[last_date]
+        return optimal_weights_dict
