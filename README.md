@@ -10,19 +10,43 @@ This project showcases a machine learning-based portfolio optimisation strategy 
 - [Acknowledgements](#acknowledgements)
 ## Features
 
-- **Optimised Estimator for 5-Day-Ahead Performance:**
-  Our estimator is designed to optimise for 5-day-ahead equity performance. The challenge of overlapping labels, which can disrupt the independent and identically distributed (i.i.d) assumption and lead to overfitting, is addressed using the `NoOverlapVoter`. This tool trains separate estimators on non-overlapping data sets and combines them through a voting mechanism. For further insights, refer to [Advances in Financial Machine Learning](https://www.wiley.com/en-br/Advances+in+Financial+Machine+Learning-p-9781119482086) by Marcos Lopez de Prado.
+- **Risk Factor Construction**
+  We calculate risk factors to predict portfolio risk using the formula:
+  $$\sqrt{X^T(BFB^T+S)X}$$
+  where:
+  - $X$ is the portfolio weights,
+  - $B$ is the factor betas,
+  - $F$ is the factor covariance matrix, and
+  - $S$ is the idiosyncratic variance matrix.
 
-- **Alpha Factor Performance:**
-  Despite notable differences in factor performances across three sets, our AI ALPHA consistently achieves positive results during the validation phase. The accompanying visualisation illustrates the effectiveness of combining alphas.
+- **Optimized Estimator for 5-Day-Ahead Performance**
+  This repo includes an estimator optimized for 5-day-ahead equity performance. The challenge of overlapping labels, which violates the i.i.d assumption and can cause overfitting, is handled by the `NoOverlapVoter`. This module trains individual estimators on non-overlapping data subsets and then aggregates their predictions using a voting mechanism. More details on this approach can be found in [Advances in Financial Machine Learning](https://www.wiley.com/en-br/Advances+in+Financial+Machine+Learning-p-9781119482086) by Marcos Lopez de Prado.
+
+- **Alpha Factor Performance**
+  Our AI ALPHA model consistently generates positive results during validation, even when performance across individual factors varies significantly. The effectiveness of combining alphas is shown in the following visualization:
 
   ![combining_alphas.png](images/combining_alphas.png)
 
-- **Convex Optimisation for Portfolio Construction:**
-  Utilising a custom `cvxpy`-based convex optimisation class, we integrate combined alpha factors, risk factors, and transaction costs to construct a balanced portfolio of equities. This ensures that all critical variables are considered for optimal portfolio design.
+- **Transaction Costs**
+  Transaction cost (or slippage) is calculated by multiplying the price change caused by market impact by the dollar amount traded:
+  $$\text{tcost}_{i,t} = \%\Delta \text{price}_{i,t} \times \text{trade}_{i,t}$$
+  In summation notation:
+  $$\text{tcost}_{i,t} = \sum_{i}^{N} \lambda_{i,t}(h_{i,t} - h_{i,t-1})^2$$
+  where:
+  - $\lambda_{i,t} = \frac{1}{10 \times \text{ADV}_{i,t}}$
+    (ADV = Average Daily Volume for asset `i`).
 
-- **Backtesting and Performance Analysis:**
-  We use Zipline for rigorous backtesting of the portfolio, evaluating its historical performance. PyFolio provides detailed performance analysis, offering insights into the strategy's risk and return characteristics, which support informed decision-making.
+- **Convex Optimization for Portfolio Construction**
+  We leverage a custom `cvxpy`-based convex optimization class to build a balanced equity portfolio. This approach integrates alpha factors, risk factors, and transaction costs. The optimization objective function is defined as:
+  $$f(\mathbf{h}) = \frac{1}{2} \kappa \mathbf{h}_t^T \mathbf{Q}^T \mathbf{Q} \mathbf{h}_t + \frac{1}{2} \kappa \mathbf{h}_t^T \mathbf{S} \mathbf{h}_t - \mathbf{\alpha}^T \mathbf{h}_t + (\mathbf{h}_t - \mathbf{h}_{t-1})^T \mathbf{\Lambda} (\mathbf{h}_t - \mathbf{h}_{t-1})$$
+  where the terms represent:
+  - factor risk ($\mathbf{Q}^T \mathbf{Q} = \mathbf{BFB}^T$),
+  - idiosyncratic risk ($\mathbf{S}$),
+  - combined portfolio alpha ($\mathbf{\alpha}$), and
+  - transaction costs ($\mathbf{\Lambda}$).
+
+- **Backtesting and Performance Analysis**
+  We use Zipline for thorough backtesting, which evaluates historical portfolio performance. Additionally, PyFolio is utilized for performance analysis, providing detailed insights into the risk and return profiles of the strategy, assisting in informed decision-making.
 
 ## Installation
 
