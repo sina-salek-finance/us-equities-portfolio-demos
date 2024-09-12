@@ -13,7 +13,8 @@ This project showcases a machine learning-based portfolio optimisation strategy 
 - **Risk Factor Construction:**
   We calculate risk factors to predict portfolio risk using the formula:
 $$\sqrt{X^T(BFB^T+S)X}$$
-  where:
+
+    where:
   - $X$ is the portfolio weights,
   - $B$ is the factor betas,
   - $F$ is the factor covariance matrix, and
@@ -41,7 +42,7 @@ $$\sqrt{X^T(BFB^T+S)X}$$
 
     ![conopteq.png](images/conopteq.png)
 
-where the terms represent:
+    where the terms represent:
   - factor risk ($\mathbf{Q}^T \mathbf{Q} = \mathbf{BFB}^T$),
   - idiosyncratic risk ($\mathbf{S}$),
   - combined portfolio alpha ($\mathbf{\alpha}$), and
