@@ -29,19 +29,18 @@ $$\sqrt{X^T(BFB^T+S)X}$$
 
 - **Transaction Costs:**
   Transaction cost (or slippage) is calculated by multiplying the price change caused by market impact by the dollar amount traded:
-  $$\text{tcost}_{i,t} = \%\Delta \text{price}_{i,t} \times \text{trade}_{i,t}$$
-  In summation notation:
-  $$\text{tcost}_{i,t} = \sum_{i}^{N} \lambda_{i,t}(h_{i,t} - h_{i,t-1})^2$$
+
+  ![tcost.png](images/tcost.png)
+
   where
   $\lambda_{i,t} = \frac{1}{10 \times \text{ADV}_{i,t}}$
     (ADV = Average Daily Volume for asset $i$).
 
 - **Convex Optimization for Portfolio Construction:**
   We leverage a custom `cvxpy`-based convex optimization class to build a balanced equity portfolio. This approach integrates alpha factors, risk factors, and transaction costs. The optimization objective function is defined as:
- $$f(\mathbf{h}) = \frac{1}{2} \kappa \mathbf{h}_t^T \mathbf{Q}^T \mathbf{Q} \mathbf{h}_t$$
- $$+\frac{1}{2} \kappa \mathbf{h}_t^T \mathbf{S} \mathbf{h}_t $$
- $$-\mathbf{\alpha}^T \mathbf{h}_t$$
- $$+(\mathbf{h}t - \mathbf{h}{t-1})^T \mathbf{\Lambda} (\mathbf{h}t - \mathbf{h}{t-1})$$
+
+    ![conopteq.png](images/conopteq.png)
+
 where the terms represent:
   - factor risk ($\mathbf{Q}^T \mathbf{Q} = \mathbf{BFB}^T$),
   - idiosyncratic risk ($\mathbf{S}$),
