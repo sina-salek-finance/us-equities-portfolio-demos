@@ -31,16 +31,14 @@ This project showcases a machine learning-based portfolio optimisation strategy 
 
 - **Transaction Costs:**
   Transaction cost (or slippage) is calculated by multiplying the price change caused by market impact by the dollar amount traded:
-
-  ```math
-  tcost_{i,t} = sum_{i}^{N} lambda_{i,t} (h_{i,t} - h_{i,t-1})^2
-  ```
-
-  where
-  ```math
-  \lambda_{i,t} = \frac{1}{10 \times \text{ADV}_{i,t}}$
-  ```
-  where ADV = Average Daily Volume for asset $i$.
+    ```math
+    tcost_{i,t} = sum_{i}^{N} lambda_{i,t} (h_{i,t} - h_{i,t-1})^2
+    ```
+    where
+    ```math
+    \lambda_{i,t} = \frac{1}{10 \times \text{ADV}_{i,t}}$
+    ```
+    where ADV = Average Daily Volume for asset $i$.
 
 - **Convex Optimization for Portfolio Construction:**
   We leverage a custom `cvxpy`-based convex optimization class to build a balanced equity portfolio. This approach integrates alpha factors, risk factors, and transaction costs. The optimization objective function is defined as:
