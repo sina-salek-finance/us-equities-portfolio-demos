@@ -38,8 +38,13 @@ $$\sqrt{X^T(BFB^T+S)X}$$
 
 - **Convex Optimization for Portfolio Construction:**
   We leverage a custom `cvxpy`-based convex optimization class to build a balanced equity portfolio. This approach integrates alpha factors, risk factors, and transaction costs. The optimization objective function is defined as:
-  ![equation1](https://latex.codecogs.com/svg.image?\bg{white}$$f(\mathbf{h})=\frac{1}{2}\kappa\mathbf{h}_t^T\mathbf{Q}^T\mathbf{Q}\mathbf{h}_t&plus;\frac{1}{2}\kappa\mathbf{h}_t^T\mathbf{S}\mathbf{h}_t-\mathbf{\alpha}^T\mathbf{h}_t&plus;(\mathbf{h}t-\mathbf{h}{t-1})^T\mathbf{\Lambda}(\mathbf{h}t-\mathbf{h}{t-1})$$)
-  where the terms represent:
+ $$
+  f(\mathbf{h}) = \frac{1}{2} \kappa \mathbf{h}_t^T \mathbf{Q}^T \mathbf{Q} \mathbf{h}_t $$
+$$+\frac{1}{2} \kappa \mathbf{h}_t^T \mathbf{S} \mathbf{h}_t $$
+$$-\mathbf{\alpha}^T \mathbf{h}_t$$
+$$+(\mathbf{h}t - \mathbf{h}{t-1})^T \mathbf{\Lambda} (\mathbf{h}t - \mathbf{h}{t-1})
+  $$
+where the terms represent:
   - factor risk ($\mathbf{Q}^T \mathbf{Q} = \mathbf{BFB}^T$),
   - idiosyncratic risk ($\mathbf{S}$),
   - combined portfolio alpha ($\mathbf{\alpha}$), and
