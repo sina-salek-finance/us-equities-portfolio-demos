@@ -12,8 +12,9 @@ This project showcases a machine learning-based portfolio optimisation strategy 
 
 - **Risk Factor Construction:**
   We calculate risk factors to predict portfolio risk using the formula:
-$$\sqrt{h^T(BFB^T+S)h}$$
-
+    ```math
+    \sqrt{h^T(BFB^T+S)h}
+    ```
     where:
   - $h$ is the portfolio weights (holdings),
   - $B$ is the factor betas,
@@ -31,20 +32,22 @@ $$\sqrt{h^T(BFB^T+S)h}$$
 - **Transaction Costs:**
   Transaction cost (or slippage) is calculated by multiplying the price change caused by market impact by the dollar amount traded:
 
-  ![tcost.png](images/tcost.png)
+  ```math
+  tcost_{i,t} = sum_{i}^{N} lambda_{i,t} (h_{i,t} - h_{i,t-1})^2
+  ```
 
   where
-  $\lambda_{i,t} = \frac{1}{10 \times \text{ADV}_{i,t}}$
-    (ADV = Average Daily Volume for asset $i$).
+  ```math
+  \lambda_{i,t} = \frac{1}{10 \times \text{ADV}_{i,t}}$
+  ```
+  where ADV = Average Daily Volume for asset $i$.
 
 - **Convex Optimization for Portfolio Construction:**
   We leverage a custom `cvxpy`-based convex optimization class to build a balanced equity portfolio. This approach integrates alpha factors, risk factors, and transaction costs. The optimization objective function is defined as:
 
-    ![conopteq.png](images/conopteq.png)
-```math
-f(\mathbf{h}) = \frac{1}{2} \kappa \mathbf{h}_t^T \mathbf{Q}^T \mathbf{Q} \mathbf{h}_t + \frac{1}{2} \kappa \mathbf{h}_t^T \mathbf{S} \mathbf{h}_t - \mathbf{\alpha}^T \mathbf{h}_t + (\mathbf{h}t - \mathbf{h}{t-1})^T \mathbf{\Lambda} (\mathbf{h}t - \mathbf{h}{t-1})
-```
-
+    ```math
+    f(\mathbf{h}) = \frac{1}{2} \kappa \mathbf{h}_t^T \mathbf{Q}^T \mathbf{Q} \mathbf{h}_t + \frac{1}{2} \kappa \mathbf{h}_t^T \mathbf{S} \mathbf{h}_t - \mathbf{\alpha}^T \mathbf{h}_t + (\mathbf{h}t - \mathbf{h}{t-1})^T \mathbf{\Lambda} (\mathbf{h}t - \mathbf{h}{t-1})
+    ```
     where the terms represent:
   - factor risk ($\mathbf{Q}^T \mathbf{Q} = \mathbf{BFB}^T$),
   - idiosyncratic risk ($\mathbf{S}$),
