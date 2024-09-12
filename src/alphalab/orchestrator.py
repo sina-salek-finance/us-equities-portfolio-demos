@@ -205,7 +205,6 @@ def main():
         with open("optimal_weights_dict.pickle", "wb") as handle:
             pickle.dump(optimal_weights_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
         mlflow.log_artifact("optimal_weights_dict.pickle")
-        os.remove("optimal_weights_dict.pickle")
 
         sorted_dates = np.sort(list(optimal_weights_dict.keys()))
         backtest_start = sorted_dates[0]
@@ -229,6 +228,8 @@ def main():
         perf.to_csv("perf.csv")
         mlflow.log_artifact("perf.csv")
         os.remove("perf.csv")
+
+        os.remove("optimal_weights_dict.pickle")
 
         plot_multiple_series(
             x_series=[perf.index],

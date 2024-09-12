@@ -17,18 +17,17 @@ from zipline.api import (
 from zipline.finance import commission, slippage
 
 
-# with open('optimal_weights_dict.pickle', 'rb') as handle:
-#     optimal_weights_dict = pickle.load(handle)
 def analyze(context, perf):
     # Simple plot of the portfolio value
     perf.portfolio_value.plot()
 
 
 def rebalance(context, data):
+    with open('optimal_weights_dict.pickle', 'rb') as handle:
+        optimal_weights_dict = pickle.load(handle)
     # Get the current trading date
     current_date = data.current_dt.date()
 
-    # #     pdb.set_trace()
     optimal_weights = optimal_weights_dict[pd.Timestamp(current_date)]
 
     # Execute the trades based on optimal weights
