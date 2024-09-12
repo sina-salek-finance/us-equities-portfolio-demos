@@ -10,42 +10,42 @@ This project showcases a machine learning-based portfolio optimisation strategy 
 - [Acknowledgements](#acknowledgements)
 ## Features
 
-- **Risk Factor Construction:**
+- **Risk Factor Construction**
   We calculate risk factors to predict portfolio risk using the formula:
-$\sqrt{X^T(BFB^T+S)X}$
+  `$$\sqrt{X^T(BFB^T+S)X}$$`
   where:
-  - $X$ is the portfolio weights,
-  - $B$ is the factor betas,
-  - $F$ is the factor covariance matrix, and
-  - $S$ is the idiosyncratic variance matrix.
+  - `X` is the portfolio weights,
+  - `B` is the factor betas,
+  - `F` is the factor covariance matrix, and
+  - `S` is the idiosyncratic variance matrix.
 
-- **Optimized Estimator for 5-Day-Ahead Performance:**
+- **Optimized Estimator for 5-Day-Ahead Performance**
   This repo includes an estimator optimized for 5-day-ahead equity performance. The challenge of overlapping labels, which violates the i.i.d assumption and can cause overfitting, is handled by the `NoOverlapVoter`. This module trains individual estimators on non-overlapping data subsets and then aggregates their predictions using a voting mechanism. More details on this approach can be found in [Advances in Financial Machine Learning](https://www.wiley.com/en-br/Advances+in+Financial+Machine+Learning-p-9781119482086) by Marcos Lopez de Prado.
 
-- **Alpha Factor Performance:**
+- **Alpha Factor Performance**
   Our AI ALPHA model consistently generates positive results during validation, even when performance across individual factors varies significantly. The effectiveness of combining alphas is shown in the following visualization:
 
   ![combining_alphas.png](images/combining_alphas.png)
 
-- **Transaction Costs:**
+- **Transaction Costs**
   Transaction cost (or slippage) is calculated by multiplying the price change caused by market impact by the dollar amount traded:
-  $\text{tcost}_{i,t} = \%\Delta \text{price}_{i,t} \times \text{trade}_{i,t}$
+  `$$\text{tcost}_{i,t} = \%\Delta \text{price}_{i,t} \times \text{trade}_{i,t}$$`
   In summation notation:
-  $\text{tcost}_{i,t} = \sum_{i}^{N} \lambda_{i,t}(h_{i,t} - h_{i,t-1})^2$
-  where
-  $\lambda_{i,t} = \frac{1}{10 \times \text{ADV}_{i,t}}$
-    (ADV = Average Daily Volume for asset $i$).
+  `$$\text{tcost}_{i,t} = \sum_{i}^{N} \lambda_{i,t}(h_{i,t} - h_{i,t-1})^2$$`
+  where:
+  - `\lambda_{i,t} = \frac{1}{10 \times \text{ADV}_{i,t}}`
+    (ADV = Average Daily Volume for asset `i`).
 
-- **Convex Optimization for Portfolio Construction:**
+- **Convex Optimization for Portfolio Construction**
   We leverage a custom `cvxpy`-based convex optimization class to build a balanced equity portfolio. This approach integrates alpha factors, risk factors, and transaction costs. The optimization objective function is defined as:
-  $f(\mathbf{h}) = \frac{1}{2} \kappa \mathbf{h}_t^T \mathbf{Q}^T \mathbf{Q} \mathbf{h}_t + \frac{1}{2} \kappa \mathbf{h}_t^T \mathbf{S} \mathbf{h}_t - \mathbf{\alpha}^T \mathbf{h}_t + (\mathbf{h}_t - \mathbf{h}_{t-1})^T \mathbf{\Lambda} (\mathbf{h}_t - \mathbf{h}_{t-1})$
+  `$$f(\mathbf{h}) = \frac{1}{2} \kappa \mathbf{h}_t^T \mathbf{Q}^T \mathbf{Q} \mathbf{h}_t + \frac{1}{2} \kappa \mathbf{h}_t^T \mathbf{S} \mathbf{h}_t - \mathbf{\alpha}^T \mathbf{h}_t + (\mathbf{h}_t - \mathbf{h}_{t-1})^T \mathbf{\Lambda} (\mathbf{h}_t - \mathbf{h}_{t-1})$$`
   where the terms represent:
-  - factor risk ($\mathbf{Q}^T \mathbf{Q} = \mathbf{BFB}^T$),
-  - idiosyncratic risk ($\mathbf{S}$),
-  - combined portfolio alpha ($\mathbf{\alpha}$), and
-  - transaction costs ($\mathbf{\Lambda}$).
+  - factor risk (`\mathbf{Q}^T \mathbf{Q} = \mathbf{BFB}^T`),
+  - idiosyncratic risk (`\mathbf{S}`),
+  - expected portfolio return (`\mathbf{\alpha}`),
+  - transaction costs (`\mathbf{\Lambda}`).
 
-- **Backtesting and Performance Analysis:**
+- **Backtesting and Performance Analysis**
   We use Zipline for thorough backtesting, which evaluates historical portfolio performance. Additionally, PyFolio is utilized for performance analysis, providing detailed insights into the risk and return profiles of the strategy, assisting in informed decision-making.
 
 ## Installation
