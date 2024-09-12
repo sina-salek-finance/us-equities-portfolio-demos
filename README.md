@@ -9,13 +9,11 @@ This project showcases a machine learning-based portfolio optimisation strategy 
 - [Licence](#licence)
 - [Acknowledgements](#acknowledgements)
 ## Features
-
 - **Risk Factor Construction:**
-  We calculate risk factors to predict portfolio risk using the formula:
-    ```math
-    \sqrt{h^T(BFB^T+S)h}
-    ```
-    where:
+We calculate risk factors to predict portfolio risk using the formula
+
+  $$\sqrt{h^T(BFB^T+S)h}$$,
+  where:
   - $h$ is the portfolio weights (holdings),
   - $B$ is the factor betas,
   - $F$ is the factor covariance matrix, and
@@ -31,26 +29,22 @@ This project showcases a machine learning-based portfolio optimisation strategy 
 
 - **Transaction Costs:**
 Transaction cost (or slippage) is calculated by multiplying the price change caused by market impact by the dollar amount traded:
-```math
-tcost_{i,t} = sum_{i}^{N} lambda_{i,t} (h_{i,t} - h_{i,t-1})^2
-```
-where
-```math
-\lambda_{i,t} = \frac{1}{10 \times \text{ADV}_{i,t}}$
-```
-where ADV = Average Daily Volume for asset $i$.
+
+  $$tcost_{i,t} = \sum_{i}^{N} \lambda_{i,t} (h_{i,t} - h_{i,t-1})^2$$,
+  where
+  $$\lambda_{i,t} = \frac{1}{10 \times \text{ADV}_{i,t}}$$ with $ADV_i$ = Average Daily Volume for asset $i$.
 
 - **Convex Optimization for Portfolio Construction:**
-  We leverage a custom `cvxpy`-based convex optimization class to build a balanced equity portfolio. This approach integrates alpha factors, risk factors, and transaction costs. The optimization objective function is defined as:
-
-    ```math
-    f(\mathbf{h}) = \frac{1}{2} \kappa \mathbf{h}_t^T \mathbf{Q}^T \mathbf{Q} \mathbf{h}_t + \frac{1}{2} \kappa \mathbf{h}_t^T \mathbf{S} \mathbf{h}_t - \mathbf{\alpha}^T \mathbf{h}_t + (\mathbf{h}t - \mathbf{h}{t-1})^T \mathbf{\Lambda} (\mathbf{h}t - \mathbf{h}{t-1})
-    ```
-    where the terms represent:
-  - factor risk ($\mathbf{Q}^T \mathbf{Q} = \mathbf{BFB}^T$),
-  - idiosyncratic risk ($\mathbf{S}$),
-  - combined portfolio alpha ($\mathbf{\alpha}$), and
-  - transaction costs ($\mathbf{\Lambda}$).
+  We leverage a custom `cvxpy`-based convex optimization class to build a balanced equity portfolio. This approach integrates alpha factors, risk factors, and transaction costs. Let us define the terms:
+    - factor risk ($\mathbf{Q}^T \mathbf{Q} = \mathbf{BFB}^T$),
+    - idiosyncratic risk ($\mathbf{S}$),
+    - combined portfolio alpha ($\mathbf{\alpha}$), and
+    - transaction costs ($\mathbf{\Lambda}$).
+  Then the optimization objective function is:
+  
+```math
+f(\mathbf{h}) = \frac{1}{2} \kappa \mathbf{h}_t^T \mathbf{Q}^T \mathbf{Q} \mathbf{h}_t + \frac{1}{2} \kappa \mathbf{h}_t^T \mathbf{S} \mathbf{h}_t - \mathbf{\alpha}^T \mathbf{h}_t + (\mathbf{h}_t - \mathbf{h}_{t-1})^T \mathbf{\Lambda} (\mathbf{h}_t - \mathbf{h}_{t-1}).
+```
 
 - **Backtesting and Performance Analysis:**
   We use Zipline for thorough backtesting, which evaluates historical portfolio performance. Additionally, PyFolio is utilized for performance analysis, providing detailed insights into the risk and return profiles of the strategy, assisting in informed decision-making.
