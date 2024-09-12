@@ -29,9 +29,9 @@ This project showcases a machine learning-based portfolio optimisation strategy 
 
 - **Transaction Costs**
   Transaction cost (or slippage) is calculated by multiplying the price change caused by market impact by the dollar amount traded:
-  `$$\text{tcost}_{i,t} = \%\Delta \text{price}_{i,t} \times \text{trade}_{i,t}$$`
+  ![equation](https://latex.codecogs.com/gif.latex?\text{tcost}_{i,t}=\%\Delta\text{price}_{i,t}\times\text{trade}_{i,t})
   In summation notation:
-  `$$\text{tcost}_{i,t} = \sum_{i}^{N} \lambda_{i,t}(h_{i,t} - h_{i,t-1})^2$$`
+  ![equation](https://latex.codecogs.com/gif.latex?\text{tcost}_{i,t}=\sum_{i}^{N}\lambda_{i,t}(h_{i,t}-h_{i,t-1})^2)
   where:
   - `\lambda_{i,t} = \frac{1}{10 \times \text{ADV}_{i,t}}`
     (ADV = Average Daily Volume for asset `i`).
