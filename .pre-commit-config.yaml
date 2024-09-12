@@ -32,13 +32,6 @@ repos:
             args: [--profile, "black"]  # Set to use Black's style for import sorting
 
 
-    # nbstripout for removing outputs from Jupyter notebooks
-    - repo: https://github.com/kynan/nbstripout
-      rev: 0.6.1
-      hooks:
-          - id: nbstripout
-            args: [--drop-empty-cells]  # Argument to drop empty cells
-
     # blacken-docs for formatting code blocks in documentation files
     - repo: https://github.com/asottile/blacken-docs
       rev: 1.16.0
