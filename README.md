@@ -19,11 +19,11 @@ We calculate risk factors to predict portfolio risk using the formula
   - $F$ is the factor covariance matrix, and
   - $S$ is the idiosyncratic variance matrix.
 
-- **Optimized Estimator for 5-Day-Ahead Performance:**
-  This repo includes an estimator optimized for 5-day-ahead equity performance. The challenge of overlapping labels, which violates the i.i.d assumption and can cause overfitting, is handled by the `NoOverlapVoter`. This module trains individual estimators on non-overlapping data subsets and then aggregates their predictions using a voting mechanism. More details on this approach can be found in [Advances in Financial Machine Learning](https://www.wiley.com/en-br/Advances+in+Financial+Machine+Learning-p-9781119482086) by Marcos Lopez de Prado.
+- **Optimised Estimator for 5-Day-Ahead Performance:**
+  This repo includes an estimator optimised for 5-day-ahead equity performance. The challenge of overlapping labels, which violates the i.i.d assumption and can cause overfitting, is handled by the `NoOverlapVoter`. This module trains individual estimators on non-overlapping data subsets and then aggregates their predictions using a voting mechanism. More details on this approach can be found in [Advances in Financial Machine Learning](https://www.wiley.com/en-br/Advances+in+Financial+Machine+Learning-p-9781119482086) by Marcos Lopez de Prado.
 
 - **Alpha Factor Performance:**
-  Our AI ALPHA model consistently generates positive results during validation, even when performance across individual factors varies significantly. The effectiveness of combining alphas is shown in the following visualization:
+  Our AI ALPHA model consistently generates positive results during validation, even when performance across individual factors varies significantly. The effectiveness of combining alphas is shown in the following visualisation:
 
   ![combining_alphas.png](images/combining_alphas.png)
 
@@ -47,7 +47,7 @@ f(\mathbf{h}) = \frac{1}{2} \kappa \mathbf{h}_t^T \mathbf{Q}^T \mathbf{Q} \mathb
 ```
 
 - **Backtesting and Performance Analysis:**
-  We use Zipline for thorough backtesting, which evaluates historical portfolio performance. Additionally, PyFolio is utilized for performance analysis, providing detailed insights into the risk and return profiles of the strategy, assisting in informed decision-making.
+  We use Zipline for thorough backtesting, which evaluates historical portfolio performance. Additionally, PyFolio is utilised for performance analysis, providing detailed insights into the risk and return profiles of the strategy, assisting in informed decision-making.
 
 ## Installation
 
@@ -122,7 +122,7 @@ To run the portfolio optimisation strategy, execute the `orchestrator.py` script
 
 This will initiate the process, utilising the integrated strategies and tools to optimise the portfolio based on the predefined parameters and data.
 
-## Licence
+## License
 This project is licensed under the MIT Licence.
 ## Acknowledgements
 
