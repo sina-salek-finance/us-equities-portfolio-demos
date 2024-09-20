@@ -23,7 +23,7 @@ We calculate risk factors to predict portfolio risk using the formula
   This repo includes an estimator optimised for 5-day-ahead equity performance. The challenge of overlapping labels, which violates the i.i.d assumption and can cause overfitting, is handled by the `NoOverlapVoter`. This module trains individual estimators on non-overlapping data subsets and then aggregates their predictions using a voting mechanism. More details on this approach can be found in [Advances in Financial Machine Learning](https://www.wiley.com/en-br/Advances+in+Financial+Machine+Learning-p-9781119482086) by Marcos Lopez de Prado.
 
 - **Alpha Factor Performance:**
-  Our AI ALPHA model consistently generates positive results during validation, even when performance across individual factors varies significantly. The effectiveness of combining alphas is shown in the following visualisation:
+  The combined alpha we obtained using the above estimator (AI ALPHA) consistently generates positive results during validation, even when performance across individual factors varies significantly. The comparison of the AI ALPHA with a subset of the alphas making up the combination is shown in the following visualisation:
 
   ![combining_alphas.png](images/combining_alphas.png)
 
@@ -32,7 +32,7 @@ Transaction cost (or slippage) is calculated by multiplying the price change cau
 
   $$tcost_{i,t} = \sum_{i}^{N} \lambda_{i,t} (h_{i,t} - h_{i,t-1})^2$$,
   where
-  $$\lambda_{i,t} = \frac{1}{10 \times \text{ADV}_{i,t}}$$ with $ADV_i$ = Average Daily Volume for asset $i$.
+  $$\lambda_{i,t} = \frac{1}{10 \times \text{ADV}_{i,t}}$$ with $ADV_i$ = Average Daily Volume for asset $i$. Here we have made the simplifying assumption about linearity of transaction costs.
 
 - **Convex Optimization for Portfolio Construction:**
   We leverage a custom `cvxpy`-based convex optimization class to build a balanced equity portfolio. This approach integrates alpha factors, risk factors, and transaction costs. Let us define the terms:
