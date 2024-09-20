@@ -34,13 +34,13 @@ Transaction cost (or slippage) is calculated by multiplying the price change cau
   where
   $$\lambda_{i,t} = \frac{1}{10 \times \text{ADV}_{i,t}}$$ with $ADV_i$ = Average Daily Volume for asset $i$. Here we have made the simplifying assumption about linearity of transaction costs.
 
-- **Convex Optimization for Portfolio Construction:**
-  We leverage a custom `cvxpy`-based convex optimization class to build a balanced equity portfolio. This approach integrates alpha factors, risk factors, and transaction costs. Let us define the terms:
+- **Convex Optimisation for Portfolio Construction:**
+  We leverage a custom `cvxpy`-based convex optimisation class to build a balanced equity portfolio. This approach integrates alpha factors, risk factors, and transaction costs. Let us define the terms:
     - factor risk ($\mathbf{Q}^T \mathbf{Q} = \mathbf{BFB}^T$),
     - idiosyncratic risk ($\mathbf{S}$),
     - combined portfolio alpha ($\mathbf{\alpha}$), and
     - transaction costs ($\mathbf{\Lambda}$).
-  Then the optimization objective function is:
+  Then the optimisation objective function is:
   
 ```math
 f(\mathbf{h}) = \frac{1}{2} \kappa \mathbf{h}_t^T \mathbf{Q}^T \mathbf{Q} \mathbf{h}_t + \frac{1}{2} \kappa \mathbf{h}_t^T \mathbf{S} \mathbf{h}_t - \mathbf{\alpha}^T \mathbf{h}_t + (\mathbf{h}_t - \mathbf{h}_{t-1})^T \mathbf{\Lambda} (\mathbf{h}_t - \mathbf{h}_{t-1}).
